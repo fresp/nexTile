@@ -128,6 +128,29 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
       expect(sticky.get_workspace()).toBe(ctx.workspaces[0]);
     });
 
+    it("relocates a Wayland window that is undescribed at window-created", () => {
+      // Mutter creates a Wayland window before set_app_id / set_title arrive, so
+      // it would float by role then. Defer to an idle; describe it before it runs.
+      let idle = null;
+      const idleSpy = vi.spyOn(GLib, "idle_add").mockImplementation((_p, cb) => {
+        idle = cb;
+        return 42;
+      });
+      const metaWindow = createMockWindow({
+        wm_class: null,
+        title: null,
+        workspace: ctx.workspaces[0],
+      });
+      emitWindowCreated(metaWindow);
+      idleSpy.mockRestore();
+      metaWindow.set_wm_class("MockApp");
+      metaWindow.title = "Mock Window";
+      idle();
+      expect(metaWindow.get_workspace()).toBe(wsAt(2));
+      expect(ctx.tree.findNode("ws2").getNodeByType(NODE_TYPES.WINDOW)).toHaveLength(1);
+      expect(ctx.tree.findNode("ws0").getNodeByType(NODE_TYPES.WINDOW)).toHaveLength(0);
+    });
+
     it("is idempotent per window object", () => {
       const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
       emitWindowCreated(metaWindow);
