@@ -128,6 +128,29 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
       expect(sticky.get_workspace()).toBe(ctx.workspaces[0]);
     });
 
+    it("relocates a Wayland window that is undescribed at window-created", () => {
+      // Mutter creates a Wayland window before set_app_id / set_title arrive, so
+      // it would float by role then. Defer to an idle; describe it before it runs.
+      let idle = null;
+      const idleSpy = vi.spyOn(GLib, "idle_add").mockImplementation((_p, cb) => {
+        idle = cb;
+        return 42;
+      });
+      const metaWindow = createMockWindow({
+        wm_class: null,
+        title: null,
+        workspace: ctx.workspaces[0],
+      });
+      emitWindowCreated(metaWindow);
+      idleSpy.mockRestore();
+      metaWindow.set_wm_class("MockApp");
+      metaWindow.title = "Mock Window";
+      idle();
+      expect(metaWindow.get_workspace()).toBe(wsAt(2));
+      expect(ctx.tree.findNode("ws2").getNodeByType(NODE_TYPES.WINDOW)).toHaveLength(1);
+      expect(ctx.tree.findNode("ws0").getNodeByType(NODE_TYPES.WINDOW)).toHaveLength(0);
+    });
+
     it("is idempotent per window object", () => {
       const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
       emitWindowCreated(metaWindow);
@@ -212,6 +235,176 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
       expect(existingNode.parentNode).toBe(monitor);
       expect(existingNode.renderRect).toEqual(beforeRect);
       expect(existingNode.mode).toBe(WINDOW_MODES.TILE);
+    });
+  });
+
+  describe("per-app launch rules", () => {
+    const withRules = (launchRules) => {
+      wm().windowProps = { overrides: [], launchRules };
+    };
+
+    it("keeps a 'current' rule's window on the active workspace", () => {
+      withRules([{ wmClass: "Editor", workspace: "current" }]);
+      const metaWindow = createMockWindow({ wm_class: "Editor", workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(ctx.workspaceManager.get_n_workspaces()).toBe(2);
+      expect(metaWindow.get_workspace()).toBe(ctx.workspaces[0]);
+    });
+
+    it("moves a numbered rule's window to that workspace without appending one", () => {
+      withRules([{ wmClass: "Chat", workspace: 2 }]);
+      const metaWindow = createMockWindow({ wm_class: "Chat", workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(ctx.workspaceManager.get_n_workspaces()).toBe(2);
+      expect(metaWindow.get_workspace()).toBe(ctx.workspaces[1]);
+      expect(ctx.tree.findNode("ws1").getNodeByType(NODE_TYPES.WINDOW)).toHaveLength(1);
+    });
+
+    it("appends a workspace when the numbered one does not exist yet", () => {
+      withRules([{ wmClass: "Chat", workspace: 9 }]);
+      // Mutter returns null for a workspace that does not exist; the shared mock
+      // invents one for any index.
+      ctx.workspaceManager.get_workspace_by_index.mockImplementation(
+        (i) => ctx.workspaces[i] ?? null
+      );
+      const metaWindow = createMockWindow({ wm_class: "Chat", workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(ctx.workspaceManager.get_n_workspaces()).toBe(3);
+      expect(metaWindow.get_workspace()).toBe(wsAt(2));
+    });
+
+    it("does not move a window pinned to the workspace it is already on", () => {
+      withRules([{ wmClass: "Chat", workspace: 1 }]);
+      const metaWindow = createMockWindow({ wm_class: "Chat", workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(ctx.workspaceManager.get_n_workspaces()).toBe(2);
+      expect(metaWindow.get_workspace()).toBe(ctx.workspaces[0]);
+    });
+
+    it("matches on wmTitle when the rule has one", () => {
+      withRules([{ wmClass: "Browser", wmTitle: "Mail", workspace: "current" }]);
+      const mail = createMockWindow({
+        wm_class: "Browser",
+        title: "Mail - Inbox",
+        workspace: ctx.workspaces[0],
+      });
+      const other = createMockWindow({
+        wm_class: "Browser",
+        title: "News",
+        workspace: ctx.workspaces[0],
+      });
+      emitWindowCreated(mail);
+      expect(mail.get_workspace()).toBe(ctx.workspaces[0]);
+      emitWindowCreated(other);
+      expect(other.get_workspace()).toBe(wsAt(2));
+    });
+
+    it("leaves windows no rule matches to the global switch", () => {
+      withRules([{ wmClass: "Chat", workspace: "current" }]);
+      const metaWindow = createMockWindow({ wm_class: "Other", workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(metaWindow.get_workspace()).toBe(wsAt(2));
+    });
+
+    it("applies a rule even when the global switch is off", () => {
+      ctx.settings.set_boolean("launch-new-workspace-enabled", false);
+      withRules([{ wmClass: "Chat", workspace: "new" }]);
+      const chat = createMockWindow({ wm_class: "Chat", workspace: ctx.workspaces[0] });
+      const other = createMockWindow({ wm_class: "Other", workspace: ctx.workspaces[0] });
+      emitWindowCreated(chat);
+      emitWindowCreated(other);
+      expect(chat.get_workspace()).toBe(wsAt(2));
+      expect(other.get_workspace()).toBe(ctx.workspaces[0]);
+    });
+  });
+
+  describe("return to origin", () => {
+    let activeIndex;
+    beforeEach(() => {
+      // Let Workspace.activate() really switch the active workspace, as Mutter does.
+      activeIndex = 0;
+      ctx.workspaceManager.get_active_workspace_index.mockImplementation(() => activeIndex);
+      ctx.workspaceManager.get_active_workspace.mockImplementation(
+        () => ctx.workspaces[activeIndex]
+      );
+      vi.spyOn(Workspace.prototype, "activate").mockImplementation(function () {
+        activeIndex = ctx.workspaces.indexOf(this);
+      });
+      ctx.settings.set_boolean("launch-new-workspace-follow", true);
+    });
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    const close = (metaWindow) => {
+      const actor = metaWindow.get_compositor_private();
+      actor.border = { hide: vi.fn() };
+      actor.splitBorder = { hide: vi.fn() };
+      wm().windowDestroy(actor);
+    };
+
+    it("goes back to the origin when the launched workspace's last window closes", () => {
+      const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(activeIndex).toBe(2);
+      close(metaWindow);
+      expect(activeIndex).toBe(0);
+    });
+
+    it("stays while the launched workspace still has windows", () => {
+      ctx.settings.set_uint("launch-new-workspace-group-timeout", 1000);
+      const first = createMockWindow({ pid: 7, workspace: ctx.workspaces[0] });
+      const second = createMockWindow({ pid: 7, workspace: ctx.workspaces[0] });
+      emitWindowCreated(first);
+      second.change_workspace(ctx.workspaces[0]);
+      activeIndex = 0;
+      emitWindowCreated(second);
+      expect(activeIndex).toBe(2);
+      close(first);
+      expect(activeIndex).toBe(2);
+    });
+
+    it("stays when the setting is off", () => {
+      ctx.settings.set_boolean("launch-return-to-origin", false);
+      const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      close(metaWindow);
+      expect(activeIndex).toBe(2);
+    });
+
+    it("does nothing when the origin workspace no longer exists", () => {
+      const metaWindow = createMockWindow({ workspace: ctx.workspaces[1] });
+      activeIndex = 1;
+      emitWindowCreated(metaWindow);
+      expect(activeIndex).toBe(2);
+      ctx.workspaceManager.remove_workspace(ctx.workspaces[1]);
+      activeIndex = 1; // the launched workspace moved down to index 1
+      expect(() => close(metaWindow)).not.toThrow();
+      expect(activeIndex).toBe(1);
+    });
+
+    it("labels a launched workspace with its app until the workspace empties", () => {
+      const metaWindow = createMockWindow({ wm_class: "Chat", workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      const launched = ctx.workspaces[2];
+      expect(launch().labelFor(launched)).not.toBe("");
+      expect(launch().labelFor(ctx.workspaces[0])).toBe("");
+      close(metaWindow);
+      expect(launch().labelFor(launched)).toBe("");
+    });
+
+    it("hides labels when launch-workspace-label is off", () => {
+      ctx.settings.set_boolean("launch-workspace-label", false);
+      const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(launch().labelFor(ctx.workspaces[2])).toBe("");
+    });
+
+    it("returns on demand through activateOrigin", () => {
+      const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(launch().activateOrigin()).toBe(true);
+      expect(activeIndex).toBe(0);
     });
   });
 

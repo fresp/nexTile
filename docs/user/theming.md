@@ -1,9 +1,16 @@
 # Theming
 
-Preferences → Appearance covers focus borders, colors, border radius, gaps, screen-edge
+Preferences → Look covers focus borders, colors, border radius, gaps, screen-edge
 margins and the tab bar, and applies changes live. A color or size change reaches
 every place that hint is drawn: window borders, drag previews and overview
 thumbnails. Each group has a Reset.
+
+New installs start with the NexTile palette: red for tiled windows, gold split
+hints, violet stacked, teal tabbed and slate floating windows. Your stylesheet is
+`~/.config/nextile/stylesheet/nextile/stylesheet.css`, and NexTile never replaces
+it when its own defaults change, so an existing install keeps its colors and Reset
+returns to them. To start over from the current palette, move that file away and
+log out and back in; NexTile copies the default stylesheet there again.
 
 ## Gaps
 

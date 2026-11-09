@@ -141,6 +141,9 @@ su - gnomeshell -c "$DBUS_ENV gsettings set org.gnome.desktop.interface enable-h
 # Use static workspaces to reduce dynamic workspace thumbnail churn
 su - gnomeshell -c "$DBUS_ENV gsettings set org.gnome.mutter dynamic-workspaces false" 2>/dev/null || true
 su - gnomeshell -c "$DBUS_ENV gsettings set org.gnome.desktop.wm.preferences num-workspaces 2" 2>/dev/null || true
+# Launch → new workspace is on by default and would move every test window off
+# the workspace the tests read; the tests that cover it turn it on themselves.
+su - gnomeshell -c "$DBUS_ENV gsettings --schemadir $EXTENSION_PATH/schemas set org.gnome.shell.extensions.nextile launch-new-workspace-enabled false" 2>/dev/null || true
 # Disable external search providers to prevent D-Bus cascade when
 # org.gnome.Settings.desktop fails (IOErrorEnum: The connection is closed)
 su - gnomeshell -c "$DBUS_ENV gsettings set org.gnome.desktop.search-providers disable-external true" 2>/dev/null || true

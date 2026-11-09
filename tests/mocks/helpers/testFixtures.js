@@ -23,6 +23,8 @@ export const DEFAULT_SETTINGS = {
   "launch-new-workspace-enabled": true,
   "launch-new-workspace-follow": false,
   "launch-new-workspace-group-timeout": 1000,
+  "launch-return-to-origin": true,
+  "launch-workspace-label": true,
 
   // Layouts
   "stacked-tiling-mode-enabled": true,

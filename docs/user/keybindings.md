@@ -28,13 +28,15 @@ Focus also accepts the arrow keys.
 ## Unbound by default
 
 The cheatsheet lists only bound actions, so these are easy to miss. Bind them in
-Preferences → Keyboard.
+Preferences → Shortcuts.
 
 | Action | Setting |
 | --- | --- |
 | Focus / swap with next or previous sibling, wrapping | `window-focus-next`, `window-focus-prev`, `window-swap-next`, `window-swap-prev` |
 | [Golden-ratio resize](layouts.md#golden-ratio) | `window-golden-ratio` |
 | [Monocle](layouts.md#monocle) | `workspace-monocle-toggle` |
+| Return to the workspace a launched workspace came from | `workspace-return-origin` |
+| Turn launching into a new workspace on or off | `prefs-launch-workspace-toggle` |
 | Move the pointer to the focused window | `window-pointer-to-focus` |
 | Export config files | `prefs-config-export` |
 
@@ -49,13 +51,25 @@ notification-list keys (`Super+v`, `Super+m`) and `Super+l` lock (use `Super+q`)
 are saved first and restored on disable, even after a crash.
 
 To keep GNOME's edge tiling, turn off **Disable GNOME edge-tiling** in Preferences →
-Tiling. Turning NexTile tiling off (`Super+w`) also restores it.
+Layout. Turning NexTile tiling off (`Super+w`) also restores it.
 
 NexTile leaves workspace switching to GNOME; bind those shortcuts in GNOME Settings.
 
+## NexTile preset
+
+Preferences → Shortcuts → Presets → **Apply** binds four of the unbound actions
+above. No default shortcut changes, and **Restore Defaults** removes them again.
+
+| Shortcut | Action |
+| --- | --- |
+| `Super+f` | Monocle (`workspace-monocle-toggle`) |
+| `Super+BackSpace` | Back to the workspace a launched workspace came from (`workspace-return-origin`) |
+| `Super+Shift+n` | Launching into a new workspace on or off (`prefs-launch-workspace-toggle`) |
+| `Super+Shift+g` | Golden-ratio resize (`window-golden-ratio`) |
+
 ## Customizing
 
-- **Preferences → Keyboard:** click a row, press the chord, Enter. Clear the field
+- **Preferences → Shortcuts:** click a row, press the chord, Enter. Clear the field
   to unbind. A chord already used by another NexTile action is flagged, not blocked.
 - **GSettings:** schema `org.gnome.shell.extensions.nextile.keybindings`; each key is a
   list of accelerators, e.g. `['<Super>h', '<Super>Left']`.

@@ -87,7 +87,8 @@ NexTile's placement feature lives in `launch-workspace.js`
 handler (`window.js`):
 
 ```
-display::window-created ─▶ LaunchWorkspaceManager.handleWindowCreated (launch-workspace.js)
+display::window-created ─▶ LaunchWorkspaceManager.whenDescribed (Wayland: one idle, see below)
+                        ─▶ LaunchWorkspaceManager.handleWindowCreated (launch-workspace.js)
     eligible? ─▶ workspace_manager.append_new_workspace   ─▶ workspace-added (existing handler)
                                                               └▶ tree scaffolding ws{n} + mo{m}ws{n}
               ─▶ metaWindow.change_workspace(target)       ─▶ workspace-changed (existing reconcile)
@@ -105,6 +106,12 @@ Design notes:
   not `isFloatingExempt` (dialogs, transients, utilities, sticky, fixed-size,
   float-rule matches all keep NexTile's behavior), and not already on a non-active
   workspace. One relocation per window object (`_relocating`).
+- **Wayland timing** (`whenDescribed`): Mutter creates a Wayland window at
+  `xdg_surface.get_toplevel`, before `set_app_id`/`set_title`/`set_parent`, so at
+  `window-created` its class and title are null and `isFloatingExempt` floats it
+  by role. While the feature is on, an undescribed window's relocate-then-track
+  runs in one `PRIORITY_DEFAULT` idle: the client's same-flush requests are
+  applied by then, and the redraw source has not yet painted its first frame.
 - **Burst grouping** (`launch-new-workspace-group-timeout`): windows from the
   same pid inside the timeout share one new workspace, so a session restore or a
   multi-window app doesn't spawn one workspace per window.

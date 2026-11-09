@@ -222,6 +222,26 @@
                 0 to disable grouping.
             </description>
         </key>
+
+        <key type="b" name="launch-return-to-origin">
+            <default>true</default>
+            <summary>Return to the origin workspace when a launched workspace empties</summary>
+            <description>
+                When the last window on a workspace that NexTile created for a
+                launched application closes, switch back to the workspace that
+                application was launched from.
+            </description>
+        </key>
+
+        <key type="b" name="launch-workspace-label">
+            <default>true</default>
+            <summary>Show the launched application's name in the top bar</summary>
+            <description>
+                On a workspace NexTile created for a launched application, show
+                that application's name beside the NexTile icon in the top bar.
+                Only shown while the tray icon is shown.
+            </description>
+        </key>
         <key type="b" name="preview-hint-enabled">
             <default>true</default>
             <summary>Whether to show preview hint DND</summary>
@@ -554,6 +574,16 @@
         <key type="as" name="workspace-monocle-toggle">
             <default><![CDATA[[]]]></default>
             <summary>Toggle monocle mode</summary>
+        </key>
+
+        <key type="as" name="workspace-return-origin">
+            <default><![CDATA[[]]]></default>
+            <summary>Return to the workspace the current one was launched from</summary>
+        </key>
+
+        <key type="as" name="prefs-launch-workspace-toggle">
+            <default><![CDATA[[]]]></default>
+            <summary>Turn launching windows into a new workspace on or off</summary>
         </key>
 
         <key type="as" name="window-expand">

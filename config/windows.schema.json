@@ -35,6 +35,32 @@
         },
         "additionalProperties": false
       }
+    },
+    "launchRules": {
+      "type": "array",
+      "description": "Per-application launch placement. The first matching rule decides where a newly launched window opens, and applies even when launch-new-workspace-enabled is off.",
+      "items": {
+        "type": "object",
+        "required": ["wmClass", "workspace"],
+        "properties": {
+          "wmClass": {
+            "type": "string",
+            "description": "Window class to match. Exact match (case-sensitive); comma-separates a list of exact classes."
+          },
+          "wmTitle": {
+            "type": "string",
+            "description": "Window title to match (optional). Same matching as overrides: substring, '!' negation, comma-separated values."
+          },
+          "workspace": {
+            "oneOf": [
+              { "type": "string", "enum": ["new", "current"] },
+              { "type": "integer", "minimum": 1 }
+            ],
+            "description": "new = a fresh workspace, current = stay on the active workspace, a number = that workspace counted from 1 (a new workspace when it does not exist yet)"
+          }
+        },
+        "additionalProperties": false
+      }
     }
   },
   "required": ["overrides"],

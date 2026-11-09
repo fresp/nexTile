@@ -22,13 +22,13 @@ the workspace).
 tile: dialogs, transient windows, floating windows, always-on-visible-workspace
 pins and rule-matched float windows stay where they are. An application that
 places its own window on a specific workspace is also left alone. Check
-`launch-new-workspace-enabled` in Preferences → Tiling → Behavior, and note that
+`launch-new-workspace-enabled` in Preferences → Workspaces → Launch placement, and note that
 windows from the same application opened within the grouping window share one
 workspace by design.
 
 ## Stacked or tabbed shortcuts do nothing
 
-The mode is turned off in Preferences → Tiling.
+The mode is turned off in Preferences → Layout.
 
 ## Debug logs
 
