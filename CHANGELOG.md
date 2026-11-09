@@ -3,6 +3,64 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); tags are
 CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
 
+## [2026.11.1] — 2026-11-09
+
+Launch placement now works on Wayland and grows into NexTile's own
+workspace-first workflow: per-app rules, a way back to where you launched from,
+and the app's name in the top bar. Preferences lead with it.
+
+### Added
+
+- **Per-app placement.** Preferences → Workspaces → Per-app placement sends one
+  application's new windows to a new workspace, keeps them on the current one, or
+  pins them to a workspace number. A matching rule applies even when the global
+  switch is off. Rules are stored as `launchRules` in `windows.json`; files
+  without them load unchanged.
+- **Return to origin.** When the last window on a launched workspace closes,
+  NexTile switches back to the workspace it was launched from
+  (`launch-return-to-origin`, default on). `workspace-return-origin` does the same
+  on demand.
+- **App name in the top bar.** On a launched workspace, the application's name
+  shows beside the NexTile icon (`launch-workspace-label`, default on; needs the
+  tray icon). GNOME's own workspace names are not touched.
+- **NexTile keymap preset.** Preferences → Shortcuts → Presets → Apply binds
+  `Super+f` monocle, `Super+BackSpace` back to the origin workspace,
+  `Super+Shift+n` launch-to-workspace on/off (new `prefs-launch-workspace-toggle`)
+  and `Super+Shift+g` golden ratio. Default shortcuts are unchanged; Restore
+  Defaults removes the preset.
+- Screenshots of tiling and launch-to-workspace in the README.
+
+### Changed
+
+- **Preferences lead with Workspaces.** A new first page holds launch placement,
+  per-app rules and non-tiling workspaces. The other pages are renamed: Tiling →
+  Layout, Appearance → Look, Keyboard → Shortcuts, Windows → Rules, Portability →
+  Backup. Settings keys are unchanged.
+- **NexTile palette** for new installs: red tiled borders and previews, gold split
+  hints, violet stacked, teal tabbed and slate floating windows. An existing
+  stylesheet keeps its colors; see [theming](docs/user/theming.md) to start over
+  from the new palette.
+- The README credits Forge by name as the engine NexTile is forked from.
+
+### Fixed
+
+- **Launching into a new workspace did nothing on Wayland.** Mutter creates a
+  Wayland window before the app sends its class and title, so NexTile treated
+  every new Wayland window as a floating one and never moved it. The decision now
+  waits one main-loop turn, until the window has described itself and before its
+  first frame is drawn.
+- Saving a float rule in Preferences no longer drops other keys from
+  `windows.json`.
+- A window placed on workspace 1 by a launch rule no longer auto-splits the
+  focused window on the workspace it was launched from.
+
+### Upgrade notes
+
+- Log out and back in after updating; on Wayland GNOME Shell only loads the new
+  code at login.
+- Return to origin is on by default. Turn it off in Preferences → Workspaces if
+  you prefer to stay on an emptied workspace.
+
 ## [2026.11.0] — 2026-11-09
 
 First NexTile release.
