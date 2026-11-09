@@ -36,6 +36,7 @@
   },
   "homepage": "https://github.com/fresp/nextile#readme",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@girs/adw-1": "^1.4.2-3.2.7",
     "@girs/clutter-13": "^13.0.0-3.2.7",
     "@girs/gdk-4.0": "^4.0.0-3.2.7",
