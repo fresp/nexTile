@@ -238,6 +238,86 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
     });
   });
 
+  describe("per-app launch rules", () => {
+    const withRules = (launchRules) => {
+      wm().windowProps = { overrides: [], launchRules };
+    };
+
+    it("keeps a 'current' rule's window on the active workspace", () => {
+      withRules([{ wmClass: "Editor", workspace: "current" }]);
+      const metaWindow = createMockWindow({ wm_class: "Editor", workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(ctx.workspaceManager.get_n_workspaces()).toBe(2);
+      expect(metaWindow.get_workspace()).toBe(ctx.workspaces[0]);
+    });
+
+    it("moves a numbered rule's window to that workspace without appending one", () => {
+      withRules([{ wmClass: "Chat", workspace: 2 }]);
+      const metaWindow = createMockWindow({ wm_class: "Chat", workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(ctx.workspaceManager.get_n_workspaces()).toBe(2);
+      expect(metaWindow.get_workspace()).toBe(ctx.workspaces[1]);
+      expect(ctx.tree.findNode("ws1").getNodeByType(NODE_TYPES.WINDOW)).toHaveLength(1);
+    });
+
+    it("appends a workspace when the numbered one does not exist yet", () => {
+      withRules([{ wmClass: "Chat", workspace: 9 }]);
+      // Mutter returns null for a workspace that does not exist; the shared mock
+      // invents one for any index.
+      ctx.workspaceManager.get_workspace_by_index.mockImplementation(
+        (i) => ctx.workspaces[i] ?? null
+      );
+      const metaWindow = createMockWindow({ wm_class: "Chat", workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(ctx.workspaceManager.get_n_workspaces()).toBe(3);
+      expect(metaWindow.get_workspace()).toBe(wsAt(2));
+    });
+
+    it("does not move a window pinned to the workspace it is already on", () => {
+      withRules([{ wmClass: "Chat", workspace: 1 }]);
+      const metaWindow = createMockWindow({ wm_class: "Chat", workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(ctx.workspaceManager.get_n_workspaces()).toBe(2);
+      expect(metaWindow.get_workspace()).toBe(ctx.workspaces[0]);
+    });
+
+    it("matches on wmTitle when the rule has one", () => {
+      withRules([{ wmClass: "Browser", wmTitle: "Mail", workspace: "current" }]);
+      const mail = createMockWindow({
+        wm_class: "Browser",
+        title: "Mail - Inbox",
+        workspace: ctx.workspaces[0],
+      });
+      const other = createMockWindow({
+        wm_class: "Browser",
+        title: "News",
+        workspace: ctx.workspaces[0],
+      });
+      emitWindowCreated(mail);
+      expect(mail.get_workspace()).toBe(ctx.workspaces[0]);
+      emitWindowCreated(other);
+      expect(other.get_workspace()).toBe(wsAt(2));
+    });
+
+    it("leaves windows no rule matches to the global switch", () => {
+      withRules([{ wmClass: "Chat", workspace: "current" }]);
+      const metaWindow = createMockWindow({ wm_class: "Other", workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(metaWindow.get_workspace()).toBe(wsAt(2));
+    });
+
+    it("applies a rule even when the global switch is off", () => {
+      ctx.settings.set_boolean("launch-new-workspace-enabled", false);
+      withRules([{ wmClass: "Chat", workspace: "new" }]);
+      const chat = createMockWindow({ wm_class: "Chat", workspace: ctx.workspaces[0] });
+      const other = createMockWindow({ wm_class: "Other", workspace: ctx.workspaces[0] });
+      emitWindowCreated(chat);
+      emitWindowCreated(other);
+      expect(chat.get_workspace()).toBe(wsAt(2));
+      expect(other.get_workspace()).toBe(ctx.workspaces[0]);
+    });
+  });
+
   describe("follow setting", () => {
     it("activates the new workspace when follow is enabled", () => {
       ctx.settings.set_boolean("launch-new-workspace-follow", true);

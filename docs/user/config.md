@@ -20,8 +20,8 @@ directory there, and import (or log in).
 
 ## Launch-to-workspace settings
 
-These live in the **Behavior** group of the Tiling page (and sync through
-`settings.json` like any other setting):
+These live in the **Launch placement** group of the Workspaces page (and sync
+through `settings.json` like any other setting):
 
 | Setting | Default | Effect |
 | --- | --- | --- |
@@ -32,3 +32,30 @@ These live in the **Behavior** group of the Tiling page (and sync through
 Windows that NexTile floats anyway — dialogs, transient windows, utility
 windows, always-on-visible-workspace pins, and windows matching a
 [float rule](rules.md) — are never moved; they behave exactly as before.
+
+### Per-app placement
+
+Preferences → Workspaces → Per-app placement sends one application's new windows
+to a fixed place, whatever the global switch says. The rules are stored in
+`launchRules` in `~/.config/nextile/config/windows.json`, and the first matching
+rule wins:
+
+```json
+{
+  "overrides": [],
+  "launchRules": [
+    { "wmClass": "org.gnome.TextEditor", "workspace": "current" },
+    { "wmClass": "Slack", "workspace": 2 },
+    { "wmClass": "Microsoft-edge", "wmTitle": "Outlook", "workspace": "new" }
+  ]
+}
+```
+
+| `workspace` | Effect |
+| --- | --- |
+| `"new"` | A fresh workspace, as the global switch does. |
+| `"current"` | Stay on the active workspace and tile there. |
+| a number | That workspace, counted from 1. If it does not exist yet, a new one at the end. |
+
+`wmClass` and `wmTitle` match the same way as in [float rules](rules.md). Windows
+that float are never moved, rule or not.
