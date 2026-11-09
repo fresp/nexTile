@@ -6,7 +6,7 @@ apps.
 
 ## Adding a rule
 
-- **Preferences → Windows → Add Floating Window:** a class, optionally a title.
+- **Preferences → Rules → Add Floating Window:** a class, optionally a title.
 - **`Super+c` / `Super+Shift+c`:** float or tile the focused window or its app; the
   toggle writes the rule.
 - **The file** `~/.config/nextile/config/windows.json`, then [reload](config.md):

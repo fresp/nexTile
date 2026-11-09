@@ -41,7 +41,7 @@ gnome-extensions disable <other-uuid>
 
 Window-rule and portable-config files from another extension are not read by
 NexTile; copy the JSON files you want to keep into
-`~/.config/nextile/config/` and import them from Preferences → Portability.
+`~/.config/nextile/config/` and import them from Preferences → Backup.
 
 ## Use
 

@@ -6,9 +6,9 @@ NexTile can mirror its settings to `settings.json` and its keybindings to
 cleanly in a dotfiles repo. GSettings stays the live source; the files are an
 import/export layer.
 
-- **Export:** Preferences → Portability → Export current settings. This also turns
+- **Export:** Preferences → Backup → Export current settings. This also turns
   on **Auto-sync changes**, which rewrites the files whenever a setting changes.
-- **Reload:** Preferences → Portability → Import from files, or `Super+Shift+r`,
+- **Reload:** Preferences → Backup → Import from files, or `Super+Shift+r`,
   which re-reads all three files. It doesn't reload the stylesheet or rebuild the
   tree.
 - **On startup** NexTile imports a file only if something else changed it since NexTile

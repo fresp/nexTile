@@ -1,6 +1,6 @@
 # Theming
 
-Preferences → Appearance covers focus borders, colors, border radius, gaps, screen-edge
+Preferences → Look covers focus borders, colors, border radius, gaps, screen-edge
 margins and the tab bar, and applies changes live. A color or size change reaches
 every place that hint is drawn: window borders, drag previews and overview
 thumbnails. Each group has a Reset.

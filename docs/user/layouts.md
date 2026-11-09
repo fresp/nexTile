@@ -23,12 +23,12 @@ bottom). New windows join the focused container.
 The container shows one child at a time, with a title bar per child: stacked
 (`Super+Shift+s`) lists them vertically, tabbed (`Super+Shift+t`) as a tab strip.
 
-- Each mode can be turned off in Preferences → Tiling; its shortcut then does
+- Each mode can be turned off in Preferences → Layout; its shortcut then does
   nothing.
 - **Auto exit tabbed tiling** (on) returns a container to a split when one tab is left.
 - **Default layout for new windows** (`default-window-layout`) sets the layout of a
   container a split creates.
-- Tab bar position and height are in Preferences → Appearance. `Ctrl+Alt+y` hides
+- Tab bar position and height are in Preferences → Look. `Ctrl+Alt+y` hides
   the bars; switch children with focus navigation.
 
 ## Monocle
@@ -59,7 +59,7 @@ Drag a window over another and a preview shows where it will land (left, right, 
 bottom or center); drop to tile it there. A center drop makes a tabbed or stacked
 container (**Drag-and-drop behavior**, `dnd-center-layout`).
 
-**Drag-and-drop modifier key** (Preferences → Keyboard, `mod-mask-mouse-tile`)
+**Drag-and-drop modifier key** (Preferences → Shortcuts, `mod-mask-mouse-tile`)
 makes tiling happen only while that key is held. The default, `None`, tiles every
 drag. `preview-hint-enabled` turns the preview off.
 ## Launch placement
@@ -70,7 +70,7 @@ application and it gets its own new workspace the same way. Windows from the
 same application opened within a second share one new workspace.
 
 - Turn the behavior off, make NexTile switch to the new workspace, or change the
-  grouping window in Preferences → Tiling → Behavior
+  grouping window in Preferences → Workspaces → Launch placement
   (`launch-new-workspace-enabled`, `launch-new-workspace-follow`,
   `launch-new-workspace-group-timeout`; see [config](config.md#launch-to-workspace-settings)).
 - Dialogs, transient windows, floating windows and rule-matched windows are never

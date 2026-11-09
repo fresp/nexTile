@@ -28,7 +28,7 @@ Focus also accepts the arrow keys.
 ## Unbound by default
 
 The cheatsheet lists only bound actions, so these are easy to miss. Bind them in
-Preferences → Keyboard.
+Preferences → Shortcuts.
 
 | Action | Setting |
 | --- | --- |
@@ -55,7 +55,7 @@ NexTile leaves workspace switching to GNOME; bind those shortcuts in GNOME Setti
 
 ## Customizing
 
-- **Preferences → Keyboard:** click a row, press the chord, Enter. Clear the field
+- **Preferences → Shortcuts:** click a row, press the chord, Enter. Clear the field
   to unbind. A chord already used by another NexTile action is flagged, not blocked.
 - **GSettings:** schema `org.gnome.shell.extensions.nextile.keybindings`; each key is a
   list of accelerators, e.g. `['<Super>h', '<Super>Left']`.

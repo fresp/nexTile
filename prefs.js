@@ -26,6 +26,7 @@ import { AppearancePage } from "./lib/prefs/appearance.js";
 import { SettingsPage, makeAboutButton, findHeaderBar } from "./lib/prefs/settings.js";
 import { FloatingPage } from "./lib/prefs/floating.js";
 import { PortabilityPage } from "./lib/prefs/portability.js";
+import { WorkspacesPage } from "./lib/prefs/workspaces.js";
 import { PREFS_TITLE } from "./lib/shared/settings.js";
 
 export default class NexTileExtensionPreferences extends ExtensionPreferences {
@@ -52,13 +53,14 @@ export default class NexTileExtensionPreferences extends ExtensionPreferences {
 
     // Put About in the window header bar. Adw.PreferencesWindow doesn't expose
     // its header bar, so find it before adding pages (only the chrome exists
-    // yet). If traversal fails on some shell version, fall back to the Tiling
-    // page via SettingsPage's aboutButton.
+    // yet). If traversal fails on some shell version, fall back to the Workspaces
+    // page via WorkspacesPage's aboutButton.
     const aboutButton = makeAboutButton(window, this.metadata);
     const headerBar = findHeaderBar(window);
     if (headerBar) headerBar.pack_end(aboutButton);
     this.aboutButton = headerBar ? null : aboutButton;
 
+    window.add(new WorkspacesPage(this));
     window.add(new SettingsPage(this));
     window.add(new AppearancePage(this));
     window.add(new KeyboardPage(this));

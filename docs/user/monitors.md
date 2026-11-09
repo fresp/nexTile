@@ -5,7 +5,7 @@ monitors split horizontally, portrait ones vertically.
 
 ## Where new windows open
 
-**New window placement** (`new-window-placement`, Preferences → Tiling):
+**New window placement** (`new-window-placement`, Preferences → Layout):
 
 - `pointer` (default): the monitor with the pointer or the active window.
 - `window-actual`: the monitor the window opened on, which respects geometry an app
@@ -15,8 +15,8 @@ If windows open on the wrong monitor, try the other one.
 
 ## Excluding monitors and workspaces
 
-**Non-tiling monitors** (`monitor-skip-tile`) and **Non-tiling workspaces**
-(`workspace-skip-tile`), in Preferences → Tiling, take comma-separated indices, e.g.
+**Non-tiling monitors** (`monitor-skip-tile`, Preferences → Layout) and **Non-tiling
+workspaces** (`workspace-skip-tile`, Preferences → Workspaces) take comma-separated indices, e.g.
 `0,1`. Windows there never tile, which suits a monitor kept for chat or media.
 `Super+Shift+w` adds or removes the current workspace.
 
