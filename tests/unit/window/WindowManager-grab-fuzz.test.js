@@ -127,14 +127,14 @@ describe("WindowManager - grab-sequence fuzzer", () => {
         expect(node.parentNode, `${where}: window without parent`).toBeTruthy();
         expect(
           node.parentNode.childNodes.includes(node),
-          `${where}: parent does not list child`
+          `${where}: parent does not list child`,
         ).toBe(true);
       }
 
       // The dragged node, if closed, must be gone from the tree.
       if (termination === "window-close") {
         expect(wm.allNodeWindows.includes(dragged), `${where}: closed node still in tree`).toBe(
-          false
+          false,
         );
         // NODE_TYPES referenced to keep imports honest about tree shape checks.
         expect(dragged.nodeType).toBe(NODE_TYPES.WINDOW);

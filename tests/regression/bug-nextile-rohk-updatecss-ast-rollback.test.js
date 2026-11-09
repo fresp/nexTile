@@ -57,7 +57,7 @@ describe("Bug nextile-rohk: a failed write leaves the AST dirty and the retry no
 
     expect(file.replace_contents).toHaveBeenCalledTimes(2);
     expect(new TextDecoder().decode(file.replace_contents.mock.calls[1][0])).toContain(
-      "color: red"
+      "color: red",
     );
     expect(theme.getCssProperty(".tiled", "color").value).toBe("red");
   });

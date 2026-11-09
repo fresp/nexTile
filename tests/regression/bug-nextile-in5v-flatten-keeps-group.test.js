@@ -89,6 +89,6 @@ describe("Bug nextile-in5v: flatten keeps a stacked/tabbed group around a lone s
 
       expect(outer.layout).toBe(LAYOUT_TYPES[layout]);
       expect(outer.childNodes).toEqual([w2, w3]);
-    }
+    },
   );
 });

@@ -213,7 +213,7 @@ describe("Bug #448: CSS parsing with rules without declarations", () => {
       const ast = parse(css);
 
       const emptyRule = ast.stylesheet.rules.find(
-        (r) => r.selectors && r.selectors.includes(".empty")
+        (r) => r.selectors && r.selectors.includes(".empty"),
       );
 
       expect(emptyRule).toBeDefined();

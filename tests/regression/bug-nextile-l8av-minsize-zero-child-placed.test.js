@@ -50,7 +50,7 @@ describe("Bug nextile-l8av: over-constrained split still places a min-0 child", 
     const { con, children } = buildSplit(
       LAYOUT_TYPES.HSPLIT,
       { x: 0, y: 0, width: 1200, height: 1080 },
-      [{ min_width: 700 }, { min_width: 550 }, { min_width: 0 }]
+      [{ min_width: 700 }, { min_width: 550 }, { min_width: 0 }],
     );
 
     const sizes = ctx.tree.computeSizes(con, children);

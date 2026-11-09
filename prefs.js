@@ -71,7 +71,7 @@ export default class NexTileExtensionPreferences extends ExtensionPreferences {
         kbdSettings: this.kbdSettings,
         dir: this.dir,
         window,
-      })
+      }),
     );
     window.search_enabled = true;
     window.can_navigate_back = true;

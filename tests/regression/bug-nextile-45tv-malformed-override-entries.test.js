@@ -27,7 +27,7 @@ describe("nextile-45tv: malformed windows.json override entries are dropped", ()
     configManager = new ConfigManager({ dir: { get_path: () => "/test/extension/path" } });
     const file = new File("/config/windows.json");
     const encoded = new TextEncoder().encode(
-      JSON.stringify({ overrides: [...malformed, good], extra: 1 })
+      JSON.stringify({ overrides: [...malformed, good], extra: 1 }),
     );
     file.load_contents = () => [true, encoded, null];
     Object.defineProperty(configManager, "windowConfigFile", {

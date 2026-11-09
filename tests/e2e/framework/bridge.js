@@ -201,11 +201,11 @@
             if (isWindowOfClass(n, wmClass)) acc.push(n);
             return { acc };
           },
-          []
+          [],
         );
         if (wins.length === 0) return JSON.stringify({ error: "no windows of class" });
         const target = wins.reduce((a, b) =>
-          b.nodeValue.get_frame_rect().x < a.nodeValue.get_frame_rect().x ? b : a
+          b.nodeValue.get_frame_rect().x < a.nodeValue.get_frame_rect().x ? b : a,
         );
         const win = target.nodeValue;
         if (!win._origGetMinSize) win._origGetMinSize = win.get_min_size;
@@ -248,7 +248,7 @@
             }
             return { acc };
           },
-          0
+          0,
         );
         const ext = nextileExt();
         if (ext && ext.extWm) ext.extWm.renderTree("e2e-minsize-reset");
@@ -290,7 +290,7 @@
               n.nodeType === "WINDOW" && isWindowOfClass(n, wmClass) && n.mode !== "FLOAT";
             return { acc: hit ? acc + 1 : acc };
           },
-          0
+          0,
         );
         return String(tiled);
       } catch (e) {
@@ -381,7 +381,7 @@
         const count = reduceTree(
           r,
           (acc, n) => (n.nodeType === "WINDOW" ? { acc: acc + 1, descend: false } : { acc }),
-          0
+          0,
         );
         return String(count);
       } catch (e) {
@@ -481,7 +481,7 @@
           (n) =>
             (n.nodeType === "CON" || n.nodeType === "MONITOR") &&
             n.layout === layout &&
-            (n.childNodes || []).length >= 2
+            (n.childNodes || []).length >= 2,
         );
         if (!container) {
           return JSON.stringify({ error: "No >=2-child " + layout + " container" });
@@ -606,7 +606,7 @@
             }
             return { acc };
           },
-          null
+          null,
         );
         return String(reset);
       } catch (e) {
@@ -701,7 +701,7 @@
               add(
                 "con-single-con-child",
                 "CON wrapping a single CON should be flattened",
-                item.path
+                item.path,
               );
           }
           if (n.nodeType === "WINDOW") {
@@ -773,7 +773,7 @@
                   add(
                     "tiled-overlap",
                     "siblings overlap " + ox + "x" + oy + "px under " + n.layout,
-                    item.path + "[" + i + "," + j + "]"
+                    item.path + "[" + i + "," + j + "]",
                   );
                 }
               }
@@ -879,22 +879,22 @@
           if (hint === "leftmost")
             return wins.reduce(
               (b, x) => (x.get_frame_rect().x < b.get_frame_rect().x ? x : b),
-              wins[0]
+              wins[0],
             );
           if (hint === "rightmost")
             return wins.reduce(
               (b, x) => (x.get_frame_rect().x > b.get_frame_rect().x ? x : b),
-              wins[0]
+              wins[0],
             );
           if (hint === "topmost")
             return wins.reduce(
               (b, x) => (x.get_frame_rect().y < b.get_frame_rect().y ? x : b),
-              wins[0]
+              wins[0],
             );
           if (hint === "bottommost")
             return wins.reduce(
               (b, x) => (x.get_frame_rect().y > b.get_frame_rect().y ? x : b),
-              wins[0]
+              wins[0],
             );
           return wins[0];
         };
@@ -980,22 +980,22 @@
           if (hint === "leftmost")
             return wins.reduce(
               (b, x) => (x.get_frame_rect().x < b.get_frame_rect().x ? x : b),
-              wins[0]
+              wins[0],
             );
           if (hint === "rightmost")
             return wins.reduce(
               (b, x) => (x.get_frame_rect().x > b.get_frame_rect().x ? x : b),
-              wins[0]
+              wins[0],
             );
           if (hint === "topmost")
             return wins.reduce(
               (b, x) => (x.get_frame_rect().y < b.get_frame_rect().y ? x : b),
-              wins[0]
+              wins[0],
             );
           if (hint === "bottommost")
             return wins.reduce(
               (b, x) => (x.get_frame_rect().y > b.get_frame_rect().y ? x : b),
-              wins[0]
+              wins[0],
             );
           return wins[0];
         };
@@ -1194,7 +1194,7 @@
           wmClass: w.get_wm_class(),
           rect: rect(w.get_frame_rect()),
           isFocused: w.has_focus(),
-        }))
+        })),
       );
     },
 
@@ -1350,7 +1350,7 @@
         const all = props && props.overrides ? props.overrides : [];
         const before = all.length;
         props.overrides = all.filter(
-          (o) => !(o.wmClass === wmClass && !o.wmId && !o.wmTitle && o.mode === "float")
+          (o) => !(o.wmClass === wmClass && !o.wmId && !o.wmTitle && o.mode === "float"),
         );
         cfg.windowProps = props;
         return String(before - props.overrides.length);
@@ -1457,22 +1457,22 @@
           if (hint === "leftmost") {
             targetWin = wins.reduce(
               (best, w) => (w.get_frame_rect().x < best.get_frame_rect().x ? w : best),
-              wins[0]
+              wins[0],
             );
           } else if (hint === "rightmost") {
             targetWin = wins.reduce(
               (best, w) => (w.get_frame_rect().x > best.get_frame_rect().x ? w : best),
-              wins[0]
+              wins[0],
             );
           } else if (hint === "topmost") {
             targetWin = wins.reduce(
               (best, w) => (w.get_frame_rect().y < best.get_frame_rect().y ? w : best),
-              wins[0]
+              wins[0],
             );
           } else if (hint === "bottommost") {
             targetWin = wins.reduce(
               (best, w) => (w.get_frame_rect().y > best.get_frame_rect().y ? w : best),
-              wins[0]
+              wins[0],
             );
           }
           global.display.get_focus_window = function () {
@@ -1561,12 +1561,12 @@
         const seat = backend.get_default_seat();
         if (!globalThis._nextileTestVKbd) {
           globalThis._nextileTestVKbd = seat.create_virtual_device(
-            Clutter.InputDeviceType.KEYBOARD_DEVICE
+            Clutter.InputDeviceType.KEYBOARD_DEVICE,
           );
         }
         if (!globalThis._nextileTestVMouse) {
           globalThis._nextileTestVMouse = seat.create_virtual_device(
-            Clutter.InputDeviceType.POINTER_DEVICE
+            Clutter.InputDeviceType.POINTER_DEVICE,
           );
         }
         return "ok";
@@ -1593,7 +1593,7 @@
             }
             return { acc };
           },
-          { count: 0, visible: 0 }
+          { count: 0, visible: 0 },
         );
         return JSON.stringify(state);
       } catch (e) {
@@ -1697,7 +1697,7 @@
               if (n.previewHint) previewHints += 1;
               return { acc };
             },
-            null
+            null,
           );
         }
         return JSON.stringify({ signals, timers, decorations, tabs, previewHints });

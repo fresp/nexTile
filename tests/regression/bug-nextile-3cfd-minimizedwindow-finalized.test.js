@@ -51,7 +51,7 @@ describe("Bug nextile-3cfd: resize pair-walk tolerates a finalized wrapper", () 
     const left = ctx.tree.createNode(
       monitor.nodeValue,
       NODE_TYPES.WINDOW,
-      createMockWindow({ id: 3702, workspace: ctx.workspaces[0] })
+      createMockWindow({ id: 3702, workspace: ctx.workspaces[0] }),
     );
     left.mode = WINDOW_MODES.TILE;
 

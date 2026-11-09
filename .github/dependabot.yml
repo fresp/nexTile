@@ -15,3 +15,13 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: "development"
+    ignore:
+      # TypeScript 6+ turns on strict by default and 7 checks JSDoc in JS
+      # differently; moving to it is a manual migration, not a weekly bump.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # The @girs typings follow GNOME generations (the -13 namespaces map to
+      # GNOME 45). A newer generation drops APIs NexTile still calls on older
+      # GNOME versions, so the typings are updated by hand together with
+      # types/ambient.d.ts.
+      - dependency-name: "@girs/*"

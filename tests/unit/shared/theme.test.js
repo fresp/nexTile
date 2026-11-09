@@ -485,7 +485,7 @@ describe("Bug #312 (nextile-9sd) - read-only stylesheet persistence", () => {
       "unix::mode",
       0o644,
       expect.anything(),
-      null
+      null,
     );
     expect(file._writable).toBe(true);
     expect(tm.reloadStylesheet).toHaveBeenCalled();
@@ -550,7 +550,7 @@ describe("Bug #312 (nextile-9sd) - read-only stylesheet persistence", () => {
     bak._writable = false;
     const realNewForPath = File.new_for_path;
     vi.spyOn(File, "new_for_path").mockImplementation((path) =>
-      path === bak.path ? bak : realNewForPath(path)
+      path === bak.path ? bak : realNewForPath(path),
     );
 
     const configMgr = { stylesheetFile: dest, defaultStylesheetFile: source };

@@ -53,7 +53,7 @@ describe("nextile-aqds: bound SpinButtonRow ranges match gschema <range>", () =>
 
   it("finds the bound spin-button rows", () => {
     expect(rows.map((r) => r.key)).toEqual(
-      expect.arrayContaining(["window-gap-size", "focus-border-radius", "stacked-tab-bar-height"])
+      expect.arrayContaining(["window-gap-size", "focus-border-radius", "stacked-tab-bar-height"]),
     );
   });
 
@@ -61,6 +61,6 @@ describe("nextile-aqds: bound SpinButtonRow ranges match gschema <range>", () =>
     "%s has a schema range equal to its widget range",
     (_, row) => {
       expect(ranges.get(row.key)).toEqual({ min: row.min, max: row.max });
-    }
+    },
   );
 });

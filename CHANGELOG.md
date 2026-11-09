@@ -3,6 +3,25 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); tags are
 CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
 
+## [2026.11.2] — 2026-11-09
+
+The first release that publishes a download. The release workflow failed for
+2026.11.0 and 2026.11.1, so neither got a GitHub Release; this one ships
+everything listed under both.
+
+### Fixed
+
+- **Release builds.** `make build` never generated `lib/prefs/metadata.js`, so
+  `make dist` stopped at its own check ("zip is missing lib/prefs/metadata.js")
+  and no release zip was published. The build and the type check now generate it.
+
+### Changed
+
+- Development tooling follows the dev-dependency updates: Prettier 3 (the code
+  is reformatted), ESLint 10, Vitest 5, husky 9 and lint-staged 17. TypeScript
+  stays on 5 and the GNOME typings on GNOME 45, and Dependabot no longer bundles
+  their major updates into the weekly group.
+
 ## [2026.11.1] — 2026-11-09
 
 Launch placement now works on Wayland and grows into NexTile's own

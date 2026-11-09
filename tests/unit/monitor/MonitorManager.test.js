@@ -44,7 +44,7 @@ describe("MonitorManager", () => {
       determineSplitLayout: vi.fn(() => LAYOUT_TYPES.HSPLIT),
       // Mirrors the real helper: portrait (height > width) -> VSPLIT.
       determineSplitLayoutForRect: vi.fn((rect) =>
-        rect && rect.width < rect.height ? LAYOUT_TYPES.VSPLIT : LAYOUT_TYPES.HSPLIT
+        rect && rect.width < rect.height ? LAYOUT_TYPES.VSPLIT : LAYOUT_TYPES.HSPLIT,
       ),
     };
 

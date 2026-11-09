@@ -435,7 +435,7 @@ describe("ConfigManager", () => {
         expect(userFile.copy).toHaveBeenCalledTimes(1);
         expect(userFile.copy.mock.calls[0][0].get_path()).toBe("/config/windows.json.bak");
         expect(userFile.copy.mock.invocationCallOrder[0]).toBeLessThan(
-          userFile.replace_contents.mock.invocationCallOrder[0]
+          userFile.replace_contents.mock.invocationCallOrder[0],
         );
       });
 
@@ -452,7 +452,7 @@ describe("ConfigManager", () => {
 
       it("nextile-45tv: also backs up a file whose malformed entries the getter drops", () => {
         const userFile = setup(
-          JSON.stringify({ overrides: [null, { wmClass: ["Mine"], mode: "float" }] })
+          JSON.stringify({ overrides: [null, { wmClass: ["Mine"], mode: "float" }] }),
         );
 
         addRule();

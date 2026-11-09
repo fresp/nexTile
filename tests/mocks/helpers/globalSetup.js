@@ -55,7 +55,7 @@ export function createMockDisplay(options = {}) {
       const cx = rect.x + rect.width / 2;
       const cy = rect.y + rect.height / 2;
       const idx = geometries.findIndex(
-        (g) => cx >= g.x && cx < g.x + g.width && cy >= g.y && cy < g.y + g.height
+        (g) => cx >= g.x && cx < g.x + g.width && cy >= g.y && cy < g.y + g.height,
       );
       return idx === -1 ? 0 : idx;
     }),

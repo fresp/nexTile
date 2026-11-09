@@ -71,7 +71,7 @@ describe("nextile-7c7o: window-added debounce survives a finalized window", () =
     expect(extWm.updateMetaWorkspaceMonitor).toHaveBeenCalledWith(
       "window-added",
       liveWindow.get_monitor(),
-      liveWindow
+      liveWindow,
     );
     expect(extWm._wsWindowAddSrcId).toBe(0);
   });

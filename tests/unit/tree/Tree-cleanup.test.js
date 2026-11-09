@@ -434,8 +434,8 @@ describe("Tree Cleanup and Container Management", () => {
       // Should have fewer nested containers
       expect(
         allCons.filter(
-          (c) => c.childNodes.length === 1 && c.childNodes[0].nodeType === NODE_TYPES.CON
-        ).length
+          (c) => c.childNodes.length === 1 && c.childNodes[0].nodeType === NODE_TYPES.CON,
+        ).length,
       ).toBe(0);
     });
 

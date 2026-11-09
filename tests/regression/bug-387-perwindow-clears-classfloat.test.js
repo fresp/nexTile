@@ -49,7 +49,7 @@ describe("Bug #387: per-window toggle re-tiles a class-floated window", () => {
     ctx.windowManager.toggleFloatingMode(CLASS_TOGGLE, win);
     expect(ctx.windowManager.isFloatingExempt(win)).toBe(true);
     expect(overrides().some((o) => o.wmClass === "TestApp" && !o.wmId && o.mode === "float")).toBe(
-      true
+      true,
     );
 
     // Super+c: re-tile THIS window.
@@ -58,11 +58,11 @@ describe("Bug #387: per-window toggle re-tiles a class-floated window", () => {
     // Now tiled (a per-window tile override wins)...
     expect(ctx.windowManager.isFloatingExempt(win)).toBe(false);
     expect(
-      overrides().some((o) => o.wmClass === "TestApp" && o.wmId === 3001 && o.mode === "tile")
+      overrides().some((o) => o.wmClass === "TestApp" && o.wmId === 3001 && o.mode === "tile"),
     ).toBe(true);
     // ...but the class-wide float rule is untouched (siblings stay floated).
     expect(overrides().some((o) => o.wmClass === "TestApp" && !o.wmId && o.mode === "float")).toBe(
-      true
+      true,
     );
   });
 
@@ -77,7 +77,7 @@ describe("Bug #387: per-window toggle re-tiles a class-floated window", () => {
     expect(overrides().some((o) => o.mode === "tile")).toBe(false);
     // Class float rule still present.
     expect(overrides().some((o) => o.wmClass === "TestApp" && !o.wmId && o.mode === "float")).toBe(
-      true
+      true,
     );
   });
 

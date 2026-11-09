@@ -63,7 +63,7 @@ describe("findAccelConflicts (nextile-cos)", () => {
 
   it("detects another binding using the same accelerator", () => {
     expect(
-      findAccelConflicts(["<Super>h"], { selfBind: "window-focus-left", keys, getStrv })
+      findAccelConflicts(["<Super>h"], { selfBind: "window-focus-left", keys, getStrv }),
     ).toEqual([{ accel: "<Super>h", key: "workspace-active-tile-toggle" }]);
   });
 
@@ -71,13 +71,13 @@ describe("findAccelConflicts (nextile-cos)", () => {
     // Editing workspace-active-tile-toggle to <Super>h still conflicts with
     // window-focus-left, but must not report itself.
     expect(
-      findAccelConflicts(["<Super>h"], { selfBind: "workspace-active-tile-toggle", keys, getStrv })
+      findAccelConflicts(["<Super>h"], { selfBind: "workspace-active-tile-toggle", keys, getStrv }),
     ).toEqual([{ accel: "<Super>h", key: "window-focus-left" }]);
   });
 
   it("returns no conflicts for a unique accelerator", () => {
     expect(
-      findAccelConflicts(["<Super>x"], { selfBind: "window-focus-left", keys, getStrv })
+      findAccelConflicts(["<Super>x"], { selfBind: "window-focus-left", keys, getStrv }),
     ).toEqual([]);
   });
 

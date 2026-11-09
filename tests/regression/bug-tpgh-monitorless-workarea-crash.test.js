@@ -107,7 +107,7 @@ describe("Bug nextile-tpgh: monitor-less window does not abort via work-area loo
       ctx.tree.createNode(
         ctx.tree.getNodeByType(NODE_TYPES.MONITOR)[0].nodeValue,
         NODE_TYPES.WINDOW,
-        dialog
+        dialog,
       );
 
       // Pre-condition: it overlaps the neighbor, so the occlusion path runs.
@@ -133,7 +133,7 @@ describe("Bug nextile-tpgh: monitor-less window does not abort via work-area loo
       const node = ctx.tree.createNode(
         getWorkspaceAndMonitor(ctx).monitor.nodeValue,
         NODE_TYPES.WINDOW,
-        orphan
+        orphan,
       );
       node.mode = WINDOW_MODES.TILE;
       node.rect = null;

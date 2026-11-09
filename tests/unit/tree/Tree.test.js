@@ -155,7 +155,7 @@ describe("Tree", () => {
       const windowNode = ctx.tree.createNode(
         monitor.nodeValue,
         NODE_TYPES.WINDOW,
-        createMockWindow()
+        createMockWindow(),
       );
 
       const windows = ctx.tree.nodeWindows;

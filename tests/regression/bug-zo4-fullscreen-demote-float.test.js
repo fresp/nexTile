@@ -38,7 +38,7 @@ describe("nextile-zo4: demote always-on-top floats under a fullscreen window", (
   // Create a window node under the given monitor with an explicit mode.
   function addWindow(
     monitor,
-    { mode = WINDOW_MODES.TILE, nextileAbove = false, ...overrides } = {}
+    { mode = WINDOW_MODES.TILE, nextileAbove = false, ...overrides } = {},
   ) {
     const win = createMockWindow({ wm_class: "App", ...overrides });
     const node = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, win);

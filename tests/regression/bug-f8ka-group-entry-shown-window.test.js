@@ -148,7 +148,7 @@ describe("nextile-f8ka: every focus path records the shown window", () => {
   it("a window's focus signal (click, tab click, alt-tab, hover) updates lastTabFocus", () => {
     const wm = ctx.windowManager;
     const windows = ["A", "B", "C"].map((c) =>
-      createMockWindow({ wm_class: c, workspace: ctx.workspaces[0] })
+      createMockWindow({ wm_class: c, workspace: ctx.workspaces[0] }),
     );
     windows.forEach((w) => wm.trackWindow(null, w));
     const { monitor } = getWorkspaceAndMonitor(ctx, 0, 0);
@@ -216,7 +216,7 @@ describe("nextile-f8ka: a window that tiles again without a focus change is reco
     // A floats by a per-window override that FloatToggle drops again.
     const exempt = vi.spyOn(ctx.windowManager, "isFloatingExempt").mockReturnValue(true);
     vi.spyOn(ctx.windowManager, "removeFloatOverride").mockImplementation(() =>
-      exempt.mockReturnValue(false)
+      exempt.mockReturnValue(false),
     );
 
     ctx.windowManager.command({ name: "FloatToggle", mode: "float" });

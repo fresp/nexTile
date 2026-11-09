@@ -34,7 +34,7 @@ describe("Bug nextile-tlhk: removed split containers release their decorations",
   function tileWin(id) {
     const node = new Node(
       NODE_TYPES.WINDOW,
-      createMockWindow({ id, workspace: ctx.workspaces[0] })
+      createMockWindow({ id, workspace: ctx.workspaces[0] }),
     );
     node.settings = ctx.tree.settings;
     node.mode = WINDOW_MODES.TILE;

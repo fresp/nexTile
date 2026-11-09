@@ -65,7 +65,7 @@ describe("Bug #526: LayoutToggle on a tabbed or stacked group", () => {
         const node = ctx.tree.createNode(
           con.nodeValue,
           NODE_TYPES.WINDOW,
-          createMockWindow({ id })
+          createMockWindow({ id }),
         );
         node.mode = WINDOW_MODES.TILE;
         return node;
@@ -77,6 +77,6 @@ describe("Bug #526: LayoutToggle on a tabbed or stacked group", () => {
       ctx.windowManager.command({ name: "LayoutToggle" });
 
       expect(con.layout).toBe(LAYOUT_TYPES.VSPLIT);
-    }
+    },
   );
 });

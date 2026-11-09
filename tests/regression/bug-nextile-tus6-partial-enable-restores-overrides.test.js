@@ -103,7 +103,7 @@ describe("nextile-tus6: a failed enable() must not leave GNOME settings clobbere
       const getter = desc.type === "boolean" ? "get_boolean" : "get_strv";
       expect(
         gsettings[getter](desc.key),
-        `${desc.schemaId} '${desc.key}' was left overridden after a failed enable()`
+        `${desc.schemaId} '${desc.key}' was left overridden after a failed enable()`,
       ).toEqual(seedOriginal(desc));
     }
   });

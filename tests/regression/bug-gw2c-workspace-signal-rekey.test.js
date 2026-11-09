@@ -34,7 +34,7 @@ describe("Bug nextile-gw2c: workspace signal map is object-anchored", () => {
 
     // Simulate a reorder: index 0 now resolves to B (the stale-map hazard).
     ctx.workspaceManager.get_workspace_by_index.mockImplementation((i) =>
-      i === 0 ? B : ctx.workspaces[i]
+      i === 0 ? B : ctx.workspaces[i],
     );
 
     wsm.unbindWorkspaceSignals(0);

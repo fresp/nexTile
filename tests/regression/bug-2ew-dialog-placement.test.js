@@ -61,7 +61,7 @@ describe("Bug nextile-2ew: dialog not occluded by tiled neighbor", () => {
     ctx.tree.createNode(
       ctx.tree.getNodeByType(NODE_TYPES.MONITOR)[0].nodeValue,
       NODE_TYPES.WINDOW,
-      dialog
+      dialog,
     );
 
     // Pre-condition: it overlaps the neighbor.
@@ -87,7 +87,7 @@ describe("Bug nextile-2ew: dialog not occluded by tiled neighbor", () => {
     ctx.tree.createNode(
       ctx.tree.getNodeByType(NODE_TYPES.MONITOR)[0].nodeValue,
       NODE_TYPES.WINDOW,
-      dialog
+      dialog,
     );
 
     ctx.windowManager.processFloats();
@@ -110,7 +110,7 @@ describe("Bug nextile-2ew: dialog not occluded by tiled neighbor", () => {
     ctx.tree.createNode(
       ctx.tree.getNodeByType(NODE_TYPES.MONITOR)[0].nodeValue,
       NODE_TYPES.WINDOW,
-      dialog
+      dialog,
     );
     ctx.windowManager.processFloats();
     expect(dialog.get_frame_rect().x).toBe(280);
@@ -138,7 +138,7 @@ describe("Bug nextile-2ew: dialog not occluded by tiled neighbor", () => {
     const nodeFloat = ctx.tree.createNode(
       ctx.tree.getNodeByType(NODE_TYPES.MONITOR)[0].nodeValue,
       NODE_TYPES.WINDOW,
-      floatWin
+      floatWin,
     );
     nodeFloat.mode = WINDOW_MODES.FLOAT;
     // Float it via an explicit override so processFloats keeps it floating.

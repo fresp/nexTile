@@ -265,7 +265,7 @@ export function createTreeFixture(options = {}) {
     determineSplitLayoutForRect: vi.fn((rect) =>
       rect && rect.width < rect.height
         ? LAYOUT_TYPES.VSPLIT
-        : LAYOUT_TYPES[defaultLayout] || LAYOUT_TYPES.HSPLIT
+        : LAYOUT_TYPES[defaultLayout] || LAYOUT_TYPES.HSPLIT,
     ),
     bindWorkspaceSignals: vi.fn(),
     // Tree's minimum-size math counts the gaps around each window

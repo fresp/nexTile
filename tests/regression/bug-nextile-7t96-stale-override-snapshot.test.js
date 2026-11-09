@@ -87,7 +87,7 @@ describe("nextile-7t96: GNOME originals survive an exit that skips disable()", (
     for (const desc of SETTINGS_OVERRIDES) {
       expect(
         dconf.get(desc.schemaId)[getter(desc)](desc.key),
-        `${desc.schemaId} '${desc.key}' not restored`
+        `${desc.schemaId} '${desc.key}' not restored`,
       ).toEqual(userValue(desc));
     }
   }

@@ -84,7 +84,7 @@ describe("Bug nextile-m46q: findWindowWith scans every workspace exactly once", 
       }),
       get_tab_list: (_type, workspace) => {
         scanned.push(workspace ? workspace.index : null);
-        return workspace ? windowsByIndex[workspace.index] ?? [] : [];
+        return workspace ? (windowsByIndex[workspace.index] ?? []) : [];
       },
     };
     return scanned;
