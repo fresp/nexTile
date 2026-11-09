@@ -35,6 +35,7 @@ Preferences → Shortcuts.
 | Focus / swap with next or previous sibling, wrapping | `window-focus-next`, `window-focus-prev`, `window-swap-next`, `window-swap-prev` |
 | [Golden-ratio resize](layouts.md#golden-ratio) | `window-golden-ratio` |
 | [Monocle](layouts.md#monocle) | `workspace-monocle-toggle` |
+| Return to the workspace a launched workspace came from | `workspace-return-origin` |
 | Move the pointer to the focused window | `window-pointer-to-focus` |
 | Export config files | `prefs-config-export` |
 

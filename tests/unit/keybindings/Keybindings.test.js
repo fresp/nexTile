@@ -85,6 +85,7 @@ describe("Keybindings", () => {
         "prefs-config-export",
         "window-pointer-to-focus",
         "workspace-monocle-toggle",
+        "workspace-return-origin",
         "window-expand",
         "window-shrink",
         "prefs-app-launch",

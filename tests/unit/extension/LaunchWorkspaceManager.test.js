@@ -318,6 +318,79 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
     });
   });
 
+  describe("return to origin", () => {
+    let activeIndex;
+    beforeEach(() => {
+      // Let Workspace.activate() really switch the active workspace, as Mutter does.
+      activeIndex = 0;
+      ctx.workspaceManager.get_active_workspace_index.mockImplementation(() => activeIndex);
+      ctx.workspaceManager.get_active_workspace.mockImplementation(
+        () => ctx.workspaces[activeIndex]
+      );
+      vi.spyOn(Workspace.prototype, "activate").mockImplementation(function () {
+        activeIndex = ctx.workspaces.indexOf(this);
+      });
+      ctx.settings.set_boolean("launch-new-workspace-follow", true);
+    });
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    const close = (metaWindow) => {
+      const actor = metaWindow.get_compositor_private();
+      actor.border = { hide: vi.fn() };
+      actor.splitBorder = { hide: vi.fn() };
+      wm().windowDestroy(actor);
+    };
+
+    it("goes back to the origin when the launched workspace's last window closes", () => {
+      const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(activeIndex).toBe(2);
+      close(metaWindow);
+      expect(activeIndex).toBe(0);
+    });
+
+    it("stays while the launched workspace still has windows", () => {
+      ctx.settings.set_uint("launch-new-workspace-group-timeout", 1000);
+      const first = createMockWindow({ pid: 7, workspace: ctx.workspaces[0] });
+      const second = createMockWindow({ pid: 7, workspace: ctx.workspaces[0] });
+      emitWindowCreated(first);
+      second.change_workspace(ctx.workspaces[0]);
+      activeIndex = 0;
+      emitWindowCreated(second);
+      expect(activeIndex).toBe(2);
+      close(first);
+      expect(activeIndex).toBe(2);
+    });
+
+    it("stays when the setting is off", () => {
+      ctx.settings.set_boolean("launch-return-to-origin", false);
+      const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      close(metaWindow);
+      expect(activeIndex).toBe(2);
+    });
+
+    it("does nothing when the origin workspace no longer exists", () => {
+      const metaWindow = createMockWindow({ workspace: ctx.workspaces[1] });
+      activeIndex = 1;
+      emitWindowCreated(metaWindow);
+      expect(activeIndex).toBe(2);
+      ctx.workspaceManager.remove_workspace(ctx.workspaces[1]);
+      activeIndex = 1; // the launched workspace moved down to index 1
+      expect(() => close(metaWindow)).not.toThrow();
+      expect(activeIndex).toBe(1);
+    });
+
+    it("returns on demand through activateOrigin", () => {
+      const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(launch().activateOrigin()).toBe(true);
+      expect(activeIndex).toBe(0);
+    });
+  });
+
   describe("follow setting", () => {
     it("activates the new workspace when follow is enabled", () => {
       ctx.settings.set_boolean("launch-new-workspace-follow", true);
