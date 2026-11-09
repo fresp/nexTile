@@ -58,7 +58,7 @@ metadata:
 		print("export const developers = [\n" + "".join(f"  {json.dumps(d)},\n" for d in seen.values()) + "];")' \
 		> lib/prefs/metadata.js
 
-build: clean metadata.json schemas compilemsgs
+build: clean metadata schemas compilemsgs
 	rm -rf temp
 	mkdir -p temp
 	cp metadata.json temp
