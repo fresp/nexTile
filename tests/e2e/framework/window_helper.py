@@ -1,0 +1,635 @@
+"""
+Window Helper for E2E tests.
+
+Provides assertion helpers for verifying window positions, sizes,
+and layout states in NexTile.
+"""
+
+from typing import List, Optional, Tuple
+
+from .constants import RetryConfig, Timing, Tolerance
+from .geometry import as_rect, layout_fill_error, overlap_area
+from .shell_proxy import ShellProxy
+from .wait import WaitTimeoutError, wait_for, wait_for_stable
+
+# Per-step timeout when polling for window-close progress during teardown
+# (nextile-zsk). Generous vs. a normal close (<300ms under Xvfb) but bounded so a
+# window that refuses to close can't stall teardown for long; WINDOW_CLOSE_ATTEMPTS
+# caps the number of steps.
+CLOSE_POLL_TIMEOUT = 1.5
+
+
+class WindowAssertionError(Exception):
+    """Exception raised when a window assertion fails."""
+
+    pass
+
+
+def drain_all_windows(shell_proxy: ShellProxy) -> int:
+    """Close every window on EVERY workspace, one at a time, via D-Bus.
+
+    Shared teardown drain for conftest's clean_workspace and the fuzz engine's
+    _reset_workspace (nextile-4b6: the fuzz session spawns windows on whichever
+    workspace its switch_ws step left active; an active-workspace-only sweep
+    let leftovers on other workspaces survive into the rest of the suite).
+
+    Closing windows individually avoids overwhelming the rendering pipeline
+    under Xvfb, which can saturate the main loop and cause gnome-shell to
+    lose its D-Bus service channel name.
+
+    Returns the number of windows remaining (0 on success; best-effort).
+    """
+    # The cap counts rounds where nothing closed, so any number of windows drains.
+    stalled = 0
+    while stalled < RetryConfig.WINDOW_CLOSE_ATTEMPTS:
+        try:
+            count_before = shell_proxy.get_total_window_count()
+            if count_before == 0:
+                return 0
+            shell_proxy.close_one_window_any_workspace()
+            # Poll for the window count to actually drop rather than a fixed
+            # WINDOW_CLOSE sleep (nextile-zsk). Short
+            # timeout so a window that won't close can't stall teardown; the
+            # attempt cap bounds total work and the next iteration re-reads state.
+            try:
+                wait_for(
+                    shell_proxy.get_total_window_count,
+                    predicate=lambda n: isinstance(n, int) and n < count_before,
+                    timeout=CLOSE_POLL_TIMEOUT,
+                    interval=Timing.POLL_INTERVAL_WINDOW,
+                )
+            except WaitTimeoutError:
+                # No progress this round; let the loop re-attempt (bounded).
+                stalled += 1
+        except Exception:
+            break
+    # Final settle: wait for a fully empty session instead of a fixed sleep.
+    # Swallow the timeout — a non-empty result is tolerated here exactly as the
+    # old unconditional WINDOW_SETTLE sleep tolerated it (best-effort teardown).
+    try:
+        wait_for(
+            shell_proxy.get_total_window_count,
+            predicate=lambda n: n == 0,
+            timeout=CLOSE_POLL_TIMEOUT,
+            interval=Timing.POLL_INTERVAL_WINDOW,
+        )
+        return 0
+    except WaitTimeoutError:
+        pass
+    except Exception:
+        return -1
+    try:
+        return shell_proxy.get_total_window_count()
+    except Exception:
+        return -1
+
+
+class WindowHelper:
+    """
+    Helper class for window-related assertions and queries.
+
+    Provides methods to verify window positions, sizes, and
+    relative positioning for testing NexTile tiling behavior.
+    """
+
+    def __init__(self, shell_proxy: ShellProxy):
+        """
+        Initialize the window helper.
+
+        Args:
+            shell_proxy: ShellProxy instance for querying window state.
+        """
+        self._shell = shell_proxy
+
+    def get_window_by_class(self, wm_class: str) -> Optional[dict]:
+        """
+        Get window information by WM_CLASS.
+
+        Args:
+            wm_class: The WM_CLASS to search for.
+
+        Returns:
+            Window dictionary or None if not found.
+        """
+        windows = self._shell.get_windows()
+        if isinstance(windows, list):
+            for window in windows:
+                if window.get("wmClass") == wm_class:
+                    return window
+        return None
+
+    def get_focused_window(self) -> dict:
+        """
+        Get the currently focused window.
+
+        Returns:
+            Window dictionary with title, wmClass, rect.
+
+        Raises:
+            WindowAssertionError: If no window is focused.
+        """
+        window = self._shell.get_focused_window()
+        if isinstance(window, dict) and "error" in window:
+            raise WindowAssertionError(window["error"])
+        return window
+
+    def get_focused_id(self) -> int:
+        """Return the stable Meta.Window id of the focused window (nextile-gwo).
+
+        The fixtures launch same-class windows, so wmClass/title cannot tell one
+        from another; get_id() can. Reuses get_focused_window(), which raises on
+        an {error:...} payload — so this never silently returns a sentinel.
+
+        Raises:
+            WindowAssertionError: If no window is focused, or the shell did not
+                report an id.
+        """
+        focused = self.get_focused_window()
+        window_id = focused.get("id")
+        if window_id is None:
+            raise WindowAssertionError(f"focused window reported no id: {focused!r}")
+        return window_id
+
+    def assert_focus_moved(self, before_id: int) -> int:
+        """Assert focus landed on a DIFFERENT window than before_id (nextile-gwo).
+
+        Use after a Focus navigation that must change the active window (>= 2
+        windows, not at an edge — NexTile focus-nav STAYS at edges, it does not
+        wrap). For the edge case where focus should stay put, assert
+        get_focused_id() == before_id directly instead.
+
+        Returns:
+            The new focused window id (for chaining the next navigation).
+        """
+        after_id = self.get_focused_id()
+        if after_id == before_id:
+            raise WindowAssertionError(f"focus did not move: still on window id {after_id}")
+        return after_id
+
+    def get_workspace_rect(self) -> dict:
+        """
+        Get the current workspace's usable area.
+
+        Returns:
+            Dictionary with x, y, width, height.
+        """
+        return self._shell.get_workspace_rect()
+
+    # Position assertions
+
+    def assert_window_position(
+        self,
+        wm_class: str,
+        expected_x: int,
+        expected_y: int,
+        tolerance: int = Tolerance.POSITION,
+    ) -> None:
+        """
+        Assert that a window is at the expected position.
+
+        Args:
+            wm_class: Window's WM_CLASS.
+            expected_x: Expected X coordinate.
+            expected_y: Expected Y coordinate.
+            tolerance: Allowed deviation in pixels.
+
+        Raises:
+            WindowAssertionError: If position doesn't match.
+        """
+        window = self.get_window_by_class(wm_class)
+        if not window:
+            raise WindowAssertionError(f"Window with class '{wm_class}' not found")
+
+        rect = window.get("rect", {})
+        actual_x = rect.get("x", 0)
+        actual_y = rect.get("y", 0)
+
+        if abs(actual_x - expected_x) > tolerance or abs(actual_y - expected_y) > tolerance:
+            raise WindowAssertionError(
+                f"Window position mismatch: expected ({expected_x}, {expected_y}), "
+                f"got ({actual_x}, {actual_y})"
+            )
+
+    def assert_window_size(
+        self,
+        wm_class: str,
+        expected_width: int,
+        expected_height: int,
+        tolerance: int = Tolerance.POSITION,
+    ) -> None:
+        """
+        Assert that a window has the expected size.
+
+        Args:
+            wm_class: Window's WM_CLASS.
+            expected_width: Expected width.
+            expected_height: Expected height.
+            tolerance: Allowed deviation in pixels.
+
+        Raises:
+            WindowAssertionError: If size doesn't match.
+        """
+        window = self.get_window_by_class(wm_class)
+        if not window:
+            raise WindowAssertionError(f"Window with class '{wm_class}' not found")
+
+        rect = window.get("rect", {})
+        actual_width = rect.get("width", 0)
+        actual_height = rect.get("height", 0)
+
+        if (
+            abs(actual_width - expected_width) > tolerance
+            or abs(actual_height - expected_height) > tolerance
+        ):
+            raise WindowAssertionError(
+                f"Window size mismatch: expected ({expected_width}x{expected_height}), "
+                f"got ({actual_width}x{actual_height})"
+            )
+
+    def assert_window_fills_workspace(
+        self,
+        wm_class: str,
+        position_tolerance: int = Tolerance.POSITION,
+        size_tolerance: int = Tolerance.SIZE,
+    ) -> None:
+        """
+        Assert that a window fills the entire workspace.
+
+        Args:
+            wm_class: Window's WM_CLASS.
+            position_tolerance: Allowed deviation in position (pixels).
+            size_tolerance: Allowed deviation in size (pixels, accounts for gaps).
+
+        Raises:
+            WindowAssertionError: If window doesn't fill workspace.
+        """
+        window = self.get_window_by_class(wm_class)
+        if not window:
+            raise WindowAssertionError(f"Window with class '{wm_class}' not found")
+
+        workspace = self.get_workspace_rect()
+        rect = window.get("rect", {})
+
+        # Check position
+        if (
+            abs(rect.get("x", 0) - workspace.get("x", 0)) > position_tolerance
+            or abs(rect.get("y", 0) - workspace.get("y", 0)) > position_tolerance
+        ):
+            raise WindowAssertionError(
+                f"Window not at workspace origin: "
+                f"window at ({rect.get('x')}, {rect.get('y')}), "
+                f"workspace at ({workspace.get('x')}, {workspace.get('y')})"
+            )
+
+        # Check size (allows for gaps around window edges)
+        if (
+            abs(rect.get("width", 0) - workspace.get("width", 0)) > size_tolerance
+            or abs(rect.get("height", 0) - workspace.get("height", 0)) > size_tolerance
+        ):
+            raise WindowAssertionError(
+                f"Window not filling workspace: "
+                f"window ({rect.get('width')}x{rect.get('height')}), "
+                f"workspace ({workspace.get('width')}x{workspace.get('height')})"
+            )
+
+    # Relative position assertions
+
+    def assert_windows_side_by_side(
+        self,
+        left_wm_class: str,
+        right_wm_class: str,
+        tolerance: int = Tolerance.POSITION,
+    ) -> None:
+        """
+        Assert that two windows are positioned side by side horizontally.
+
+        Args:
+            left_wm_class: WM_CLASS of the left window.
+            right_wm_class: WM_CLASS of the right window.
+            tolerance: Allowed deviation in pixels.
+
+        Raises:
+            WindowAssertionError: If windows aren't side by side.
+        """
+        left = self.get_window_by_class(left_wm_class)
+        right = self.get_window_by_class(right_wm_class)
+
+        if not left:
+            raise WindowAssertionError(f"Left window '{left_wm_class}' not found")
+        if not right:
+            raise WindowAssertionError(f"Right window '{right_wm_class}' not found")
+
+        left_rect = left.get("rect", {})
+        right_rect = right.get("rect", {})
+
+        # Right window's x should be near left window's x + width
+        expected_right_x = left_rect.get("x", 0) + left_rect.get("width", 0)
+        actual_right_x = right_rect.get("x", 0)
+
+        if abs(actual_right_x - expected_right_x) > tolerance:
+            raise WindowAssertionError(
+                f"Windows not side by side: left ends at x={expected_right_x}, "
+                f"right starts at x={actual_right_x}"
+            )
+
+        # Windows should have similar y position and height
+        if abs(left_rect.get("y", 0) - right_rect.get("y", 0)) > tolerance:
+            raise WindowAssertionError(
+                f"Windows not aligned vertically: "
+                f"left at y={left_rect.get('y')}, right at y={right_rect.get('y')}"
+            )
+
+    def assert_windows_stacked_vertically(
+        self,
+        top_wm_class: str,
+        bottom_wm_class: str,
+        tolerance: int = Tolerance.POSITION,
+    ) -> None:
+        """
+        Assert that two windows are stacked vertically.
+
+        Args:
+            top_wm_class: WM_CLASS of the top window.
+            bottom_wm_class: WM_CLASS of the bottom window.
+            tolerance: Allowed deviation in pixels.
+
+        Raises:
+            WindowAssertionError: If windows aren't stacked.
+        """
+        top = self.get_window_by_class(top_wm_class)
+        bottom = self.get_window_by_class(bottom_wm_class)
+
+        if not top:
+            raise WindowAssertionError(f"Top window '{top_wm_class}' not found")
+        if not bottom:
+            raise WindowAssertionError(f"Bottom window '{bottom_wm_class}' not found")
+
+        top_rect = top.get("rect", {})
+        bottom_rect = bottom.get("rect", {})
+
+        # Bottom window's y should be near top window's y + height
+        expected_bottom_y = top_rect.get("y", 0) + top_rect.get("height", 0)
+        actual_bottom_y = bottom_rect.get("y", 0)
+
+        if abs(actual_bottom_y - expected_bottom_y) > tolerance:
+            raise WindowAssertionError(
+                f"Windows not stacked: top ends at y={expected_bottom_y}, "
+                f"bottom starts at y={actual_bottom_y}"
+            )
+
+        # Windows should have similar x position
+        if abs(top_rect.get("x", 0) - bottom_rect.get("x", 0)) > tolerance:
+            raise WindowAssertionError(
+                f"Windows not aligned horizontally: "
+                f"top at x={top_rect.get('x')}, bottom at x={bottom_rect.get('x')}"
+            )
+
+    def assert_windows_equal_width(
+        self,
+        wm_class1: str,
+        wm_class2: str,
+        tolerance: int = Tolerance.POSITION,
+    ) -> None:
+        """
+        Assert that two windows have equal width.
+
+        Args:
+            wm_class1: First window's WM_CLASS.
+            wm_class2: Second window's WM_CLASS.
+            tolerance: Allowed deviation in pixels.
+        """
+        w1 = self.get_window_by_class(wm_class1)
+        w2 = self.get_window_by_class(wm_class2)
+
+        if not w1:
+            raise WindowAssertionError(f"Window '{wm_class1}' not found")
+        if not w2:
+            raise WindowAssertionError(f"Window '{wm_class2}' not found")
+
+        width1 = w1.get("rect", {}).get("width", 0)
+        width2 = w2.get("rect", {}).get("width", 0)
+
+        if abs(width1 - width2) > tolerance:
+            raise WindowAssertionError(
+                f"Windows don't have equal width: {wm_class1}={width1}, {wm_class2}={width2}"
+            )
+
+    def assert_windows_equal_height(
+        self,
+        wm_class1: str,
+        wm_class2: str,
+        tolerance: int = Tolerance.POSITION,
+    ) -> None:
+        """
+        Assert that two windows have equal height.
+
+        Args:
+            wm_class1: First window's WM_CLASS.
+            wm_class2: Second window's WM_CLASS.
+            tolerance: Allowed deviation in pixels.
+        """
+        w1 = self.get_window_by_class(wm_class1)
+        w2 = self.get_window_by_class(wm_class2)
+
+        if not w1:
+            raise WindowAssertionError(f"Window '{wm_class1}' not found")
+        if not w2:
+            raise WindowAssertionError(f"Window '{wm_class2}' not found")
+
+        height1 = w1.get("rect", {}).get("height", 0)
+        height2 = w2.get("rect", {}).get("height", 0)
+
+        if abs(height1 - height2) > tolerance:
+            raise WindowAssertionError(
+                f"Windows don't have equal height: {wm_class1}={height1}, {wm_class2}={height2}"
+            )
+
+    # Layout assertions
+
+    def assert_layout_type(self, expected_layout: str) -> None:
+        """
+        Assert that the focused window's container has the expected layout.
+
+        Args:
+            expected_layout: Expected layout type ('HSPLIT', 'VSPLIT', 'STACKED', 'TABBED').
+
+        Raises:
+            WindowAssertionError: If layout doesn't match.
+        """
+        actual_layout = self._shell.get_container_layout()
+
+        if actual_layout != expected_layout:
+            raise WindowAssertionError(
+                f"Layout mismatch: expected '{expected_layout}', got '{actual_layout}'"
+            )
+
+    def assert_window_floating(self, wm_class: str, should_be_floating: bool = True) -> None:
+        """
+        Assert that a window is floating or tiled.
+
+        Args:
+            wm_class: Window's WM_CLASS.
+            should_be_floating: True if window should be floating, False if tiled.
+
+        Raises:
+            WindowAssertionError: If float state doesn't match.
+        """
+        is_floating = self._shell.is_window_floating(wm_class)
+
+        if is_floating != should_be_floating:
+            state = "floating" if should_be_floating else "tiled"
+            actual = "tiled" if should_be_floating else "floating"
+            raise WindowAssertionError(f"Window '{wm_class}' should be {state} but is {actual}")
+
+    def assert_window_focused(self, wm_class: str) -> None:
+        """
+        Assert that a specific window is focused.
+
+        Args:
+            wm_class: Expected WM_CLASS of focused window.
+
+        Raises:
+            WindowAssertionError: If wrong window is focused.
+        """
+        focused = self.get_focused_window()
+        if focused.get("wmClass") != wm_class:
+            raise WindowAssertionError(
+                f"Expected '{wm_class}' to be focused, but '{focused.get('wmClass')}' is"
+            )
+
+    def get_window_rect(self, wm_class: str) -> Tuple[int, int, int, int]:
+        """
+        Get window rectangle as tuple.
+
+        Args:
+            wm_class: Window's WM_CLASS.
+
+        Returns:
+            Tuple of (x, y, width, height).
+
+        Raises:
+            WindowAssertionError: If window not found.
+        """
+        window = self.get_window_by_class(wm_class)
+        if not window:
+            raise WindowAssertionError(f"Window '{wm_class}' not found")
+
+        rect = window.get("rect", {})
+        return (
+            rect.get("x", 0),
+            rect.get("y", 0),
+            rect.get("width", 0),
+            rect.get("height", 0),
+        )
+
+    @staticmethod
+    def calculate_overlap(
+        rect1: Tuple[int, int, int, int], rect2: Tuple[int, int, int, int]
+    ) -> int:
+        """
+        Calculate overlapping pixel area between two rectangles.
+
+        Args:
+            rect1: First rectangle as (x, y, width, height).
+            rect2: Second rectangle as (x, y, width, height).
+
+        Returns:
+            Overlapping area in pixels.
+        """
+        return overlap_area(rect1, rect2)
+
+    def assert_windows_no_overlap(
+        self,
+        wm_class1: str,
+        wm_class2: str,
+        max_overlap: int = Tolerance.OVERLAP,
+    ) -> None:
+        """
+        Assert that two windows don't significantly overlap.
+
+        Args:
+            wm_class1: First window's WM_CLASS.
+            wm_class2: Second window's WM_CLASS.
+            max_overlap: Maximum allowed overlap in pixels.
+
+        Raises:
+            WindowAssertionError: If windows overlap too much.
+        """
+        rect1 = self.get_window_rect(wm_class1)
+        rect2 = self.get_window_rect(wm_class2)
+        overlap = self.calculate_overlap(rect1, rect2)
+
+        if overlap > max_overlap:
+            raise WindowAssertionError(
+                f"Windows overlap by {overlap} pixels (max allowed: {max_overlap})"
+            )
+
+    # Sorting and measurement helpers
+
+    def get_windows_sorted_by_position(self, axis: str = "x") -> List[dict]:
+        """
+        Get all windows sorted by position along an axis.
+
+        Args:
+            axis: Sort axis - 'x' for horizontal, 'y' for vertical.
+
+        Returns:
+            List of window dicts sorted by the specified coordinate.
+        """
+        windows = self._shell.get_windows()
+        if not isinstance(windows, list):
+            return []
+        return sorted(windows, key=lambda w: w.get("rect", {}).get(axis, 0))
+
+    def assert_windows_fill_workspace(self, tolerance: float = Tolerance.FILL_RATIO) -> None:
+        """
+        Assert that tiled windows together fill most of the workspace without
+        overlapping each other. Split layouts only: stacked/tabbed windows share
+        one rect by design, which this reports as overlap.
+
+        Args:
+            tolerance: Minimum fill ratio (0.0 to 1.0).
+
+        Raises:
+            WindowAssertionError: If windows overlap or the fill ratio is below
+                tolerance.
+        """
+        workspace = self._shell.get_workspace_rect()
+
+        windows = self._shell.get_windows()
+        if not isinstance(windows, list) or not windows:
+            raise WindowAssertionError("No windows found")
+
+        error = layout_fill_error(
+            [as_rect(w.get("rect", {})) for w in windows], as_rect(workspace), tolerance
+        )
+        if error:
+            raise WindowAssertionError(error)
+
+    def measure_gap_between(self) -> int:
+        """
+        Measure the pixel gap between two side-by-side windows.
+
+        Returns:
+            Gap in pixels between the right edge of the left window
+            and the left edge of the right window.
+
+        Raises:
+            WindowAssertionError: If fewer than 2 windows found.
+        """
+        sorted_wins = self.get_windows_sorted_by_position("x")
+        if len(sorted_wins) < 2:
+            raise WindowAssertionError("Need at least 2 windows to measure gap")
+
+        left = sorted_wins[0].get("rect", {})
+        right = sorted_wins[1].get("rect", {})
+        return right.get("x", 0) - (left.get("x", 0) + left.get("width", 0))
+
+    def measure_settled_gap(self) -> int:
+        """measure_gap_between() once NexTile's re-layout has landed.
+
+        Windows move one at a time, so a gap read mid-render can sit halfway
+        between the old and the new value.
+        """
+        self._shell.wait_for_nextile_settled()
+        return wait_for_stable(self.measure_gap_between)

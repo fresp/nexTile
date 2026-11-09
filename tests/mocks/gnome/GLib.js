@@ -1,0 +1,98 @@
+// Mock GLib namespace
+
+export function getenv(variable) {
+  // Return mock environment variables
+  const mockEnv = {
+    HOME: "/home/test",
+    USER: "testuser",
+    SHELL: "/bin/bash",
+  };
+  return mockEnv[variable] || null;
+}
+
+export function get_home_dir() {
+  return "/home/test";
+}
+
+export function get_user_data_dir() {
+  return "/home/test/.local/share";
+}
+
+export function get_user_config_dir() {
+  return "/home/test/.config";
+}
+
+export function build_filenamev(paths) {
+  return paths.join("/");
+}
+
+export function file_test(file, test) {
+  // Mock file test - always return true for simplicity
+  return true;
+}
+
+export const FileTest = {
+  EXISTS: 1 << 0,
+  IS_REGULAR: 1 << 1,
+  IS_SYMLINK: 1 << 2,
+  IS_DIR: 1 << 3,
+  IS_EXECUTABLE: 1 << 4,
+};
+
+export const PRIORITY_DEFAULT = 0;
+export const PRIORITY_DEFAULT_IDLE = 200;
+export const PRIORITY_HIGH = -100;
+export const PRIORITY_LOW = 100;
+
+export const SOURCE_REMOVE = false;
+
+export function timeout_add(priority, interval, callback) {
+  // Mock timeout - return a fake ID
+  return Math.random();
+}
+
+export function idle_add(priority, callback) {
+  // Runs the callback synchronously and returns 0 ("no pending source"). Real
+  // g_idle_add returns the id first and runs the callback later, so a callback
+  // that clears its own source id (renderTree's _renderTreeSrcId) leaves it 0.
+  // Returning a non-zero id after the callback already ran would overwrite that
+  // reset and make every later debounced call a no-op.
+  if (typeof callback === "function") {
+    callback();
+  }
+  return 0;
+}
+
+export function source_remove(id) {
+  // Mock source removal
+  return true;
+}
+
+export const Source = {
+  remove: (id) => true,
+};
+
+export function mkdir_with_parents(path, mode) {
+  // Mock directory creation - return 0 for success
+  return 0;
+}
+
+export default {
+  getenv,
+  get_home_dir,
+  get_user_data_dir,
+  get_user_config_dir,
+  build_filenamev,
+  file_test,
+  FileTest,
+  PRIORITY_DEFAULT,
+  PRIORITY_DEFAULT_IDLE,
+  PRIORITY_HIGH,
+  PRIORITY_LOW,
+  SOURCE_REMOVE,
+  timeout_add,
+  idle_add,
+  source_remove,
+  Source,
+  mkdir_with_parents,
+};

@@ -1,0 +1,309 @@
+#!/bin/bash
+# Start the GNOME Shell session for E2E testing
+# This script must be run as root
+#
+# Supports two modes:
+#   X11 mode (GNOME 45-48): Xvfb + gnome-shell --x11
+#   Wayland headless mode (GNOME 49+): gnome-shell --headless --wayland --virtual-monitor
+#
+# Mode is auto-detected based on whether gnome-shell supports --x11.
+# Fedora 43+ compiles gnome-shell without X11 support, requiring headless Wayland.
+set -e
+
+DISPLAY_NUM="${1:-99}"
+
+# Pre-flight validation
+if ! id gnomeshell &>/dev/null; then
+    echo "ERROR: 'gnomeshell' user does not exist"
+    exit 1
+fi
+
+if ! command -v gnome-shell &>/dev/null; then
+    echo "ERROR: gnome-shell is not installed"
+    exit 1
+fi
+
+if ! command -v gdbus &>/dev/null; then
+    echo "ERROR: gdbus is not installed"
+    exit 1
+fi
+
+if ! command -v dbus-daemon &>/dev/null; then
+    echo "ERROR: dbus-daemon is not installed (install the dbus-daemon package)"
+    exit 1
+fi
+
+# Detect session type: X11 or Wayland headless
+if gnome-shell --help 2>&1 | grep -q -- '--x11'; then
+    SESSION_TYPE="x11"
+else
+    SESSION_TYPE="wayland"
+fi
+echo "Session type: $SESSION_TYPE"
+
+# Persist session type so set-env.sh and test scripts can read it
+echo "$SESSION_TYPE" > /tmp/nextile-session-type
+chmod 644 /tmp/nextile-session-type
+
+# Force software GL (llvmpipe) for every session process (nextile-4wl). On
+# F44/GNOME50, GTK attempts a ZINK/Vulkan GL path that has no device in the
+# headless container, and the failing vkCreateInstance probe is slow. These vars
+# must be passed via systemd-run --setenv — the shell runs as a transient unit
+# that does NOT inherit this script's (or the Dockerfile's) environment.
+# Spliced into each unit below.
+GL_ENV=(
+    --setenv=LIBGL_ALWAYS_SOFTWARE=1
+    --setenv=GALLIUM_DRIVER=llvmpipe
+)
+
+# X11 mode requires Xvfb
+if [ "$SESSION_TYPE" = "x11" ] && ! command -v Xvfb &>/dev/null; then
+    echo "ERROR: Xvfb is not installed (required for X11 mode)"
+    exit 1
+fi
+
+USER_ID=$(id -u gnomeshell)
+XDG_RUNTIME_DIR="/run/user/${USER_ID}"
+
+# Common environment for running commands as gnomeshell user
+BASE_ENV="XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR"
+
+echo "Setting up GNOME Shell session (${SESSION_TYPE} mode)..."
+
+# Create user runtime dir if it doesn't exist
+if [ ! -d "$XDG_RUNTIME_DIR" ]; then
+    echo "Creating XDG_RUNTIME_DIR..."
+    mkdir -p "$XDG_RUNTIME_DIR"
+    chown gnomeshell:gnomeshell "$XDG_RUNTIME_DIR"
+    chmod 700 "$XDG_RUNTIME_DIR"
+fi
+
+# Fix permissions on gnome-shell data directories
+echo "Fixing permissions..."
+mkdir -p /home/gnomeshell/.local/share/gnome-shell
+mkdir -p /home/gnomeshell/.local/share/icc
+chown -R gnomeshell:gnomeshell /home/gnomeshell/.local
+
+# Start Xvfb for X11 mode only
+if [ "$SESSION_TYPE" = "x11" ]; then
+    # Detect a running Xvfb by its X socket (the image has no procps-ng, so
+    # ps/pgrep are unavailable); same socket path lib.sh:wait_for_display checks.
+    if [ ! -e "/tmp/.X11-unix/X${DISPLAY_NUM}" ]; then
+        echo "Starting Xvfb on display :${DISPLAY_NUM}..."
+        Xvfb ":${DISPLAY_NUM}" -screen 0 1920x1080x24 -ac &
+        sleep 2
+    fi
+fi
+
+# Start dbus-daemon if socket doesn't exist.
+# Launch via systemd-run so the process lives in its own transient service
+# under systemd's hierarchy and survives the exit of this bootstrap script.
+# Plain `su -c "... &"` puts the daemon in the docker-exec process tree, which
+# gets reaped when the exec returns — that took gnome-shell down with it on
+# Fedora 43 (headless Wayland), since the failing user@1000.service can't keep
+# orphans alive even with lingering enabled.
+BUS_SOCKET="$XDG_RUNTIME_DIR/bus"
+if [ ! -S "$BUS_SOCKET" ]; then
+    echo "Starting D-Bus session daemon..."
+    systemd-run --unit=nextile-dbus-session --uid=gnomeshell --gid=gnomeshell \
+        --setenv=XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+        --setenv=DBUS_SESSION_BUS_ADDRESS="unix:path=$BUS_SOCKET" \
+        dbus-daemon --session --address="unix:path=$BUS_SOCKET" --nofork --nopidfile
+    sleep 1
+fi
+
+# Wait for D-Bus to be ready
+for i in {1..30}; do
+    if [ -S "$BUS_SOCKET" ]; then
+        break
+    fi
+    sleep 0.5
+done
+
+if [ ! -S "$BUS_SOCKET" ]; then
+    echo "ERROR: D-Bus socket not available at $BUS_SOCKET"
+    exit 1
+fi
+
+# D-Bus env for all subsequent commands
+DBUS_ENV="$BASE_ENV DBUS_SESSION_BUS_ADDRESS=unix:path=$BUS_SOCKET"
+
+# Enable NexTile extension via gsettings before starting GNOME Shell
+echo "Pre-enabling NexTile extension via gsettings..."
+su - gnomeshell -c "$DBUS_ENV gsettings set org.gnome.shell enabled-extensions \"['nextile@fresp.github.io']\"" 2>/dev/null || true
+
+# Configure GNOME Shell for headless testing (applies to both X11 and Wayland)
+echo "Configuring GNOME Shell for headless testing..."
+# Disable animations to reduce Clutter allocation pressure
+su - gnomeshell -c "$DBUS_ENV gsettings set org.gnome.desktop.interface enable-animations false" 2>/dev/null || true
+# Disable hot corner to prevent accidental overview triggers
+su - gnomeshell -c "$DBUS_ENV gsettings set org.gnome.desktop.interface enable-hot-corners false" 2>/dev/null || true
+# Use static workspaces to reduce dynamic workspace thumbnail churn
+su - gnomeshell -c "$DBUS_ENV gsettings set org.gnome.mutter dynamic-workspaces false" 2>/dev/null || true
+su - gnomeshell -c "$DBUS_ENV gsettings set org.gnome.desktop.wm.preferences num-workspaces 2" 2>/dev/null || true
+# Disable external search providers to prevent D-Bus cascade when
+# org.gnome.Settings.desktop fails (IOErrorEnum: The connection is closed)
+su - gnomeshell -c "$DBUS_ENV gsettings set org.gnome.desktop.search-providers disable-external true" 2>/dev/null || true
+# nextile-1gjh: gnome-shell's bundled session default sets
+# org.gnome.mutter workspaces-only-on-primary=true, but glib only applies that
+# [org.gnome.mutter:GNOME] override when XDG_CURRENT_DESKTOP contains GNOME — which
+# the shell/mutter unit here does not set, so the key silently defaulted to false
+# and the multi-monitor gate validated a NON-default config (masking nextile-16ms).
+# Pin the real desktop default explicitly on the multi-monitor leg so the gate
+# exercises it. Single-monitor lanes are unaffected (no visible effect with one
+# output), so this stays scoped to NEXTILE_E2E_VIRTUAL_MONITORS=2.
+if [ "${NEXTILE_E2E_VIRTUAL_MONITORS:-1}" = "2" ]; then
+    su - gnomeshell -c "$DBUS_ENV gsettings set org.gnome.mutter workspaces-only-on-primary true" 2>/dev/null || true
+fi
+
+# Screencast recording opt-in (nextile-qgg, Wayland-only). Bring PipeWire +
+# WirePlumber up BEFORE gnome-shell so Mutter's screencast backend has them
+# available, and so WirePlumber publishes the node that pipewiresrc consumes (a
+# missing node looks exactly like the nextile-6y7 zero-frame failure). Launched as
+# transient systemd-run units (same pattern as the D-Bus/shell units above) —
+# `systemctl --user` is unavailable (user@1000.service is masked).
+if [ "${NEXTILE_E2E_RECORD:-0}" = "1" ] && [ "$SESSION_TYPE" = "wayland" ]; then
+    if ! systemctl is-active --quiet nextile-pipewire; then
+        echo "Starting PipeWire (screencast recording enabled)..."
+        systemd-run --unit=nextile-pipewire --uid=gnomeshell --gid=gnomeshell \
+            --setenv=XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+            --setenv=DBUS_SESSION_BUS_ADDRESS="unix:path=$BUS_SOCKET" \
+            pipewire 2>/dev/null || echo "WARNING: failed to launch pipewire"
+        systemd-run --unit=nextile-wireplumber --uid=gnomeshell --gid=gnomeshell \
+            --setenv=XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+            --setenv=DBUS_SESSION_BUS_ADDRESS="unix:path=$BUS_SOCKET" \
+            wireplumber 2>/dev/null || echo "WARNING: failed to launch wireplumber"
+        echo "Waiting for PipeWire socket..."
+        for i in {1..30}; do
+            [ -S "$XDG_RUNTIME_DIR/pipewire-0" ] && break
+            sleep 0.5
+        done
+        [ -S "$XDG_RUNTIME_DIR/pipewire-0" ] \
+            && echo "PipeWire socket ready" \
+            || echo "WARNING: PipeWire socket not found at $XDG_RUNTIME_DIR/pipewire-0"
+    fi
+fi
+
+# Start GNOME Shell as a transient systemd service so it outlives this
+# bootstrap script (see dbus-daemon note above for the why).
+# Output is captured to /tmp/gnome-shell.log via the wrapping shell so existing
+# diagnostics (run-tests.sh tails this file on shell crash) keep working.
+# Skip if our gnome-shell unit is already running (no ps/pgrep in the image —
+# query the systemd unit we launch below instead).
+# Multi-monitor opt-in (nextile-a34.1): default to a single 1920x1080 virtual
+# monitor; set NEXTILE_E2E_VIRTUAL_MONITORS=2 to add a second virtual output so
+# multi-monitor tiling tests can run. Wayland-headless only — X11/Xvfb here is a
+# single screen. Default stays single-monitor so existing lanes are unchanged.
+VIRTUAL_MONITOR_ARGS="--virtual-monitor 1920x1080"
+if [ "${NEXTILE_E2E_VIRTUAL_MONITORS:-1}" = "2" ]; then
+    VIRTUAL_MONITOR_ARGS="--virtual-monitor 1920x1080 --virtual-monitor 1920x1080"
+fi
+
+if ! systemctl is-active --quiet nextile-gnome-shell; then
+    if [ "$SESSION_TYPE" = "x11" ]; then
+        echo "Starting GNOME Shell (X11 on :${DISPLAY_NUM})..."
+        # MUTTER_DEBUG_DUMMY_MONITOR_SCALES: avoids monitor scale warnings
+        # CLUTTER_VBLANK=none: prevents vblank waiting (no GPU in Xvfb)
+        systemd-run --unit=nextile-gnome-shell --uid=gnomeshell --gid=gnomeshell \
+            --setenv=XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+            --setenv=DBUS_SESSION_BUS_ADDRESS="unix:path=$BUS_SOCKET" \
+            --setenv=DISPLAY=":${DISPLAY_NUM}" \
+            --setenv=MUTTER_DEBUG_DUMMY_MONITOR_SCALES=1 \
+            --setenv=CLUTTER_VBLANK=none \
+            "${GL_ENV[@]}" \
+            sh -c "exec gnome-shell --x11 --unsafe-mode >/tmp/gnome-shell.log 2>&1"
+    else
+        echo "Starting GNOME Shell (headless Wayland)..."
+        systemd-run --unit=nextile-gnome-shell --uid=gnomeshell --gid=gnomeshell \
+            --setenv=XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+            --setenv=DBUS_SESSION_BUS_ADDRESS="unix:path=$BUS_SOCKET" \
+            "${GL_ENV[@]}" \
+            sh -c "exec gnome-shell --headless --wayland ${VIRTUAL_MONITOR_ARGS} --unsafe-mode >/tmp/gnome-shell.log 2>&1"
+    fi
+    sleep 5
+fi
+
+# For Wayland mode, detect the Wayland display socket
+if [ "$SESSION_TYPE" = "wayland" ]; then
+    echo "Waiting for Wayland display socket..."
+    WAYLAND_DISPLAY=""
+    for i in {1..30}; do
+        for f in "$XDG_RUNTIME_DIR"/wayland-*; do
+            if [ -S "$f" ]; then
+                WAYLAND_DISPLAY=$(basename "$f")
+                break 2
+            fi
+        done
+        sleep 0.5
+    done
+    if [ -n "$WAYLAND_DISPLAY" ]; then
+        echo "Wayland display: $WAYLAND_DISPLAY"
+        echo "$WAYLAND_DISPLAY" > /tmp/nextile-wayland-display
+        chmod 644 /tmp/nextile-wayland-display
+    else
+        echo "WARNING: No Wayland display socket found"
+    fi
+fi
+
+# Wait for GNOME Shell to be ready via D-Bus
+echo "Waiting for GNOME Shell to initialize..."
+SHELL_READY=0
+for i in {1..30}; do
+    if su - gnomeshell -c "$DBUS_ENV gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell --method org.gnome.Shell.Eval '1+1'" 2>/dev/null | grep -q "true"; then
+        SHELL_READY=1
+        break
+    fi
+    sleep 1
+done
+
+if [ $SHELL_READY -eq 0 ]; then
+    echo "ERROR: GNOME Shell failed to start"
+    # Print diagnostic info
+    echo "--- gnome-shell unit status ---"
+    systemctl status nextile-gnome-shell --no-pager 2>&1 | head -20 || echo "(nextile-gnome-shell unit not found)"
+    echo "--- journal errors ---"
+    journalctl --no-pager -n 20 2>/dev/null || true
+    exit 1
+fi
+
+# Enable the NexTile extension via gnome-extensions CLI
+echo "Enabling NexTile extension..."
+NEXTILE_UUID="nextile@fresp.github.io"
+
+su - gnomeshell -c "$DBUS_ENV gnome-extensions enable ${NEXTILE_UUID}" 2>&1 || true
+
+# Re-enable after a delay: GNOME Shell may not process the first enable
+# if extensions are still loading during early shell startup
+sleep 5
+su - gnomeshell -c "$DBUS_ENV gnome-extensions enable ${NEXTILE_UUID}" 2>&1 || true
+
+# Wait for extension to be enabled
+sleep 2
+
+# Check extension state
+EXT_STATE=$(su - gnomeshell -c "$DBUS_ENV gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell --method org.gnome.Shell.Eval 'global.context.unsafe_mode ? 1 : 0'" 2>/dev/null || echo "(-1)")
+echo "Unsafe mode: $EXT_STATE"
+
+# List extensions
+su - gnomeshell -c "$DBUS_ENV gnome-extensions list --enabled" 2>&1 || true
+
+# Headless gnome-shell comes up in the Overview and nothing in the E2E flow
+# dismisses it (tests drive NexTile via D-Bus and avoid the Super key on purpose).
+# Hide it on every session — X11 AND Wayland, NOT just recording — so the suite
+# runs on the real tiled desktop (the production state), giving parity between
+# what the tests exercise and what the screencast shows. Leaving the Overview up
+# was masking a real resize-persistence bug (resize "passed" only because real
+# focus was null while the Overview held it; see nextile-2n0) AND caused a flaky
+# wait_for_stable timeout on X11/Mutter 48: the X11 lane was previously excluded
+# from this suppressor, so the Overview's animating geometry kept get_frame_rect
+# churning and test_snap_position[two_third_right] never settled (nextile-2n0
+# follow-up). Install a 'showing' suppressor so it stays hidden — the persistent
+# connect re-hides it whenever the headless shell tries to return to the
+# Overview. Only touches the focus-on-hover path (the Main.overview.visible
+# guards in window.js), which the action-driven tests drive explicitly rather
+# than via hover.
+echo "Hiding GNOME Overview (parity: tests + screencast run on the real desktop)..."
+su - gnomeshell -c "$DBUS_ENV gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell --method org.gnome.Shell.Eval '(function(){ if(!globalThis._nextileNoOverview){ globalThis._nextileNoOverview = Main.overview.connect(\"showing\", () => Main.overview.hide()); } Main.overview.hide(); return Main.overview.visible ? \"visible\" : \"hidden\"; })()'" 2>&1 || true
+
+echo "GNOME Shell session ready (${SESSION_TYPE} mode)"
+exit 0

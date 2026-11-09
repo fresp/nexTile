@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+e2e-results/
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Build outputs (keep temp/ for E2E - it contains the built extension)
+dist/
+*.zip
+
+# Local scratch/development artifacts
+.scratch/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# GNOME extension install path
+.local/
+
+# Config
+.config/
+
+# Compiled schemas
+schemas/gschemas.compiled
+
+# Locale/translation build artifacts
+po/*.mo
+
+# Generated metadata
+lib/prefs/metadata.js

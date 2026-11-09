@@ -1,0 +1,768 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import St, { __setScaleFactor, __resetScaleFactor } from "gi://St";
+import Clutter from "gi://Clutter";
+import { Node, NODE_TYPES, LAYOUT_TYPES } from "../../../lib/extension/tree.js";
+import { createTreeFixture } from "../../mocks/helpers/index.js";
+
+/**
+ * Tree layout algorithm tests
+ *
+ * Tests the core tiling algorithms: processSplit, processStacked, processTabbed, computeSizes
+ * These are the heart of the i3-like window management system.
+ */
+describe("Tree Layout Algorithms", () => {
+  let ctx;
+
+  beforeEach(() => {
+    ctx = createTreeFixture({ fullExtWm: true });
+    ctx.extWm.calculateGaps = vi.fn(() => 10); // 10px gap
+  });
+
+  describe("computeSizes", () => {
+    it("should divide space equally for horizontal split", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.HSPLIT;
+      container.rect = { x: 0, y: 0, width: 1000, height: 500 };
+
+      const child1 = new Node(NODE_TYPES.CON, new St.Bin());
+      const child2 = new Node(NODE_TYPES.CON, new St.Bin());
+
+      const sizes = ctx.tree.computeSizes(container, [child1, child2]);
+
+      expect(sizes).toHaveLength(2);
+      expect(sizes[0]).toBe(500); // 1000 / 2
+      expect(sizes[1]).toBe(500);
+    });
+
+    it("should divide space equally for vertical split", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.VSPLIT;
+      container.rect = { x: 0, y: 0, width: 1000, height: 600 };
+
+      const child1 = new Node(NODE_TYPES.CON, new St.Bin());
+      const child2 = new Node(NODE_TYPES.CON, new St.Bin());
+
+      const sizes = ctx.tree.computeSizes(container, [child1, child2]);
+
+      expect(sizes).toHaveLength(2);
+      expect(sizes[0]).toBe(300); // 600 / 2
+      expect(sizes[1]).toBe(300);
+    });
+
+    it("should respect custom percent values", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.HSPLIT;
+      container.rect = { x: 0, y: 0, width: 1000, height: 500 };
+
+      const child1 = new Node(NODE_TYPES.CON, new St.Bin());
+      child1.percent = 0.7; // 70%
+
+      const child2 = new Node(NODE_TYPES.CON, new St.Bin());
+      child2.percent = 0.3; // 30%
+
+      const sizes = ctx.tree.computeSizes(container, [child1, child2]);
+
+      expect(sizes[0]).toBe(700); // 1000 * 0.7
+      expect(sizes[1]).toBe(300); // 1000 * 0.3
+    });
+
+    it("should handle three children equally", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.HSPLIT;
+      container.rect = { x: 0, y: 0, width: 900, height: 500 };
+
+      const children = [
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+      ];
+
+      const sizes = ctx.tree.computeSizes(container, children);
+
+      expect(sizes).toHaveLength(3);
+      expect(sizes[0]).toBe(300); // 900 / 3
+      expect(sizes[1]).toBe(300);
+      expect(sizes[2]).toBe(300);
+    });
+
+    it("should floor the sizes to integers", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.HSPLIT;
+      container.rect = { x: 0, y: 0, width: 1000, height: 500 };
+
+      const children = [
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+      ];
+
+      const sizes = ctx.tree.computeSizes(container, children);
+
+      // 1000 / 3 = 333.333... should floor to 333
+      sizes.forEach((size) => {
+        expect(Number.isInteger(size)).toBe(true);
+      });
+    });
+
+    it("should handle single child", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.HSPLIT;
+      container.rect = { x: 0, y: 0, width: 1000, height: 500 };
+
+      const child1 = new Node(NODE_TYPES.CON, new St.Bin());
+
+      const sizes = ctx.tree.computeSizes(container, [child1]);
+
+      expect(sizes).toHaveLength(1);
+      expect(sizes[0]).toBe(1000); // Full width
+    });
+  });
+
+  describe("processSplit - Horizontal", () => {
+    it("should split two windows horizontally", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.HSPLIT;
+      container.rect = { x: 0, y: 0, width: 1000, height: 500 };
+
+      const child1 = new Node(NODE_TYPES.CON, new St.Bin());
+      const child2 = new Node(NODE_TYPES.CON, new St.Bin());
+
+      const params = { sizes: [500, 500] };
+
+      ctx.tree.processSplit(container, child1, params, 0);
+      ctx.tree.processSplit(container, child2, params, 1);
+
+      // First child should be on the left
+      expect(child1.rect.x).toBe(0);
+      expect(child1.rect.y).toBe(0);
+      expect(child1.rect.width).toBe(500);
+      expect(child1.rect.height).toBe(500);
+
+      // Second child should be on the right
+      expect(child2.rect.x).toBe(500);
+      expect(child2.rect.y).toBe(0);
+      expect(child2.rect.width).toBe(500);
+      expect(child2.rect.height).toBe(500);
+    });
+
+    it("should split three windows with custom sizes", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.HSPLIT;
+      container.rect = { x: 100, y: 50, width: 1200, height: 600 };
+
+      const child1 = new Node(NODE_TYPES.CON, new St.Bin());
+      const child2 = new Node(NODE_TYPES.CON, new St.Bin());
+      const child3 = new Node(NODE_TYPES.CON, new St.Bin());
+
+      const params = { sizes: [300, 500, 400] };
+
+      ctx.tree.processSplit(container, child1, params, 0);
+      ctx.tree.processSplit(container, child2, params, 1);
+      ctx.tree.processSplit(container, child3, params, 2);
+
+      // Check x positions
+      expect(child1.rect.x).toBe(100);
+      expect(child2.rect.x).toBe(400); // 100 + 300
+      expect(child3.rect.x).toBe(900); // 100 + 300 + 500
+
+      // All should have same height
+      expect(child1.rect.height).toBe(600);
+      expect(child2.rect.height).toBe(600);
+      expect(child3.rect.height).toBe(600);
+
+      // Check widths
+      expect(child1.rect.width).toBe(300);
+      expect(child2.rect.width).toBe(500);
+      expect(child3.rect.width).toBe(400);
+    });
+
+    it("should handle offset container position", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.HSPLIT;
+      container.rect = { x: 200, y: 100, width: 800, height: 400 };
+
+      const child = new Node(NODE_TYPES.CON, new St.Bin());
+      const params = { sizes: [800] };
+
+      ctx.tree.processSplit(container, child, params, 0);
+
+      // Should respect container offset
+      expect(child.rect.x).toBe(200);
+      expect(child.rect.y).toBe(100);
+    });
+  });
+
+  describe("processSplit - Vertical", () => {
+    it("should split two windows vertically", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.VSPLIT;
+      container.rect = { x: 0, y: 0, width: 1000, height: 800 };
+
+      const child1 = new Node(NODE_TYPES.CON, new St.Bin());
+      const child2 = new Node(NODE_TYPES.CON, new St.Bin());
+
+      const params = { sizes: [400, 400] };
+
+      ctx.tree.processSplit(container, child1, params, 0);
+      ctx.tree.processSplit(container, child2, params, 1);
+
+      // First child should be on top
+      expect(child1.rect.x).toBe(0);
+      expect(child1.rect.y).toBe(0);
+      expect(child1.rect.width).toBe(1000);
+      expect(child1.rect.height).toBe(400);
+
+      // Second child should be below
+      expect(child2.rect.x).toBe(0);
+      expect(child2.rect.y).toBe(400);
+      expect(child2.rect.width).toBe(1000);
+      expect(child2.rect.height).toBe(400);
+    });
+
+    it("should split three windows vertically", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.VSPLIT;
+      container.rect = { x: 0, y: 0, width: 1000, height: 900 };
+
+      const child1 = new Node(NODE_TYPES.CON, new St.Bin());
+      const child2 = new Node(NODE_TYPES.CON, new St.Bin());
+      const child3 = new Node(NODE_TYPES.CON, new St.Bin());
+
+      const params = { sizes: [300, 300, 300] };
+
+      ctx.tree.processSplit(container, child1, params, 0);
+      ctx.tree.processSplit(container, child2, params, 1);
+      ctx.tree.processSplit(container, child3, params, 2);
+
+      // Check y positions
+      expect(child1.rect.y).toBe(0);
+      expect(child2.rect.y).toBe(300);
+      expect(child3.rect.y).toBe(600);
+
+      // All should have same width
+      expect(child1.rect.width).toBe(1000);
+      expect(child2.rect.width).toBe(1000);
+      expect(child3.rect.width).toBe(1000);
+    });
+  });
+
+  describe("processStacked", () => {
+    it("should place a single stacked window below its title bar", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.STACKED;
+      container.rect = { x: 0, y: 0, width: 1000, height: 800 };
+      const child = new Node(NODE_TYPES.CON, new St.Bin());
+      container.childNodes = [child];
+
+      const stackHeight = 35;
+      const params = { stackedHeight: stackHeight, tiledChildren: [child] };
+
+      ctx.tree.processStacked(container, child, params, 0);
+
+      // One title bar at the top; window fills the rest.
+      expect(child.rect.x).toBe(0);
+      expect(child.rect.y).toBe(stackHeight);
+      expect(child.rect.width).toBe(1000);
+      expect(child.rect.height).toBe(800 - stackHeight);
+    });
+
+    it("should place every stacked window below the full title-bar column", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.STACKED;
+      container.rect = { x: 0, y: 0, width: 1000, height: 800 };
+
+      const child1 = new Node(NODE_TYPES.CON, new St.Bin());
+      const child2 = new Node(NODE_TYPES.CON, new St.Bin());
+      const child3 = new Node(NODE_TYPES.CON, new St.Bin());
+      container.childNodes = [child1, child2, child3];
+
+      const stackHeight = 35;
+      const params = {
+        stackedHeight: stackHeight,
+        tiledChildren: [child1, child2, child3],
+      };
+      const totalBars = stackHeight * 3;
+
+      ctx.tree.processStacked(container, child1, params, 0);
+      ctx.tree.processStacked(container, child2, params, 1);
+      ctx.tree.processStacked(container, child3, params, 2);
+
+      // i3 stacked: N title bars at the top, every window fills the same area below.
+      [child1, child2, child3].forEach((child) => {
+        expect(child.rect.x).toBe(0);
+        expect(child.rect.y).toBe(totalBars);
+        expect(child.rect.width).toBe(1000);
+        expect(child.rect.height).toBe(800 - totalBars);
+      });
+
+      // The decoration hosts the title-bar column vertically and is shown. The
+      // suite runs as GNOME 47, which has no St `orientation` yet: `vertical` is
+      // the property that lays the column out there.
+      expect(container.decoration.vertical).toBe(true);
+      expect(container.decoration.visible).toBe(true);
+      expect(container.decoration.height).toBe(totalBars);
+    });
+
+    it("should respect container offset", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.STACKED;
+      container.rect = { x: 100, y: 50, width: 800, height: 600 };
+      const child = new Node(NODE_TYPES.CON, new St.Bin());
+      const sibling = new Node(NODE_TYPES.CON, new St.Bin());
+      container.childNodes = [child, sibling];
+
+      const stackHeight = 35;
+      const params = { stackedHeight: stackHeight, tiledChildren: [child, sibling] };
+
+      ctx.tree.processStacked(container, child, params, 0);
+
+      expect(child.rect.x).toBe(100);
+      expect(child.rect.y).toBe(50 + stackHeight * 2);
+    });
+
+    // nextile-aydd: when the title-bar column (stackHeight * count) is taller than the
+    // container, the window content's y must not be pushed below the container bottom.
+    it("should keep the window content within the container when bars overflow", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.STACKED;
+      container.rect = { x: 0, y: 0, width: 1000, height: 100 };
+
+      const children = [
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+      ];
+      container.childNodes = children;
+
+      // 5 bars * 35 = 175 > container height 100 (overflow regime).
+      const params = { stackedHeight: 35, tiledChildren: children };
+
+      children.forEach((child, i) => {
+        ctx.tree.processStacked(container, child, params, i);
+        const bottom = child.rect.y + child.rect.height;
+        expect(bottom).toBeLessThanOrEqual(container.rect.y + container.rect.height);
+      });
+    });
+
+    // Bug #8: a degenerate (<=0) container height must not make cappedBars negative,
+    // which would push the child's y above the container origin.
+    it("should clamp cappedBars to 0 when the container height is zero", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.STACKED;
+      container.rect = { x: 0, y: 0, width: 1000, height: 0 };
+
+      const child = new Node(NODE_TYPES.CON, new St.Bin());
+      const sibling = new Node(NODE_TYPES.CON, new St.Bin());
+      container.childNodes = [child, sibling];
+
+      const params = { stackedHeight: 35, tiledChildren: [child, sibling] };
+
+      ctx.tree.processStacked(container, child, params, 0);
+
+      // cappedBars clamped to 0, so the child never floats above the container.
+      expect(child.rect.y).toBeGreaterThanOrEqual(container.rect.y);
+      expect(child.rect.height).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe("processTabbed", () => {
+    it("should show single tab with full container", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.TABBED;
+      container.rect = { x: 0, y: 0, width: 1000, height: 800 };
+      container.childNodes = [new Node(NODE_TYPES.CON, new St.Bin())];
+
+      const child = new Node(NODE_TYPES.CON, new St.Bin());
+      const params = { stackedHeight: 0 };
+
+      ctx.tree.processTabbed(container, child, params, 0);
+
+      // With alwaysShowDecorationTab and stackedHeight=0, should show full size
+      expect(child.rect.x).toBe(0);
+      expect(child.rect.y).toBe(0);
+      expect(child.rect.width).toBe(1000);
+      expect(child.rect.height).toBe(800);
+    });
+
+    it("should lay the header tabs out as a horizontal row", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.TABBED;
+      container.rect = { x: 0, y: 0, width: 1000, height: 800 };
+
+      const child = new Node(NODE_TYPES.CON, new St.Bin());
+      const sibling = new Node(NODE_TYPES.CON, new St.Bin());
+      container.childNodes = [child, sibling];
+
+      const params = { stackedHeight: 35, tiledChildren: [child, sibling] };
+
+      // Start from a stacked (vertical) host so the flip back to a row is observable.
+      ctx.tree.processStacked(container, child, params, 0);
+      expect(container.decoration.vertical).toBe(true);
+
+      ctx.tree.processTabbed(container, child, params, 0);
+
+      expect(container.decoration.vertical).toBe(false);
+    });
+
+    // GNOME 51 removed St's `vertical`; the decoration host must be laid out via
+    // `orientation` there and never receive `vertical`.
+    it("GNOME 51: lays the decoration out via orientation, never `vertical`", async () => {
+      vi.resetModules();
+      vi.doMock("resource:///org/gnome/shell/misc/config.js", () => ({
+        PACKAGE_VERSION: "51.0",
+      }));
+      try {
+        const fresh = await import("../../../lib/extension/tree.js");
+        const container = new fresh.Node(fresh.NODE_TYPES.CON, new St.Bin());
+
+        fresh.Tree.prototype._ensureDecoration(container, true);
+        expect(container.decoration.constructParams).not.toHaveProperty("vertical");
+        expect(container.decoration.vertical).toBe(false);
+        expect(container.decoration.orientation).toBe(Clutter.Orientation.VERTICAL);
+
+        fresh.Tree.prototype._ensureDecoration(container, false);
+        expect(container.decoration.orientation).toBe(Clutter.Orientation.HORIZONTAL);
+      } finally {
+        vi.doUnmock("resource:///org/gnome/shell/misc/config.js");
+        vi.resetModules();
+      }
+    });
+
+    it("should account for tab decoration height", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.TABBED;
+      container.rect = { x: 0, y: 0, width: 1000, height: 800 };
+      container.childNodes = [
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+      ];
+
+      const child = new Node(NODE_TYPES.CON, new St.Bin());
+      const stackedHeight = 35; // Tab bar height
+      const params = { stackedHeight };
+
+      ctx.tree.processTabbed(container, child, params, 0);
+
+      // Y should be offset by tab bar
+      expect(child.rect.y).toBe(stackedHeight);
+      expect(child.rect.height).toBe(800 - stackedHeight);
+
+      // X and width should match container
+      expect(child.rect.x).toBe(0);
+      expect(child.rect.width).toBe(1000);
+    });
+
+    // nextile-aydd: a container shorter than the tab bar must not yield a negative height.
+    it("should never give a tab a negative height", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.TABBED;
+      container.rect = { x: 0, y: 0, width: 1000, height: 20 };
+      container.childNodes = [
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+      ];
+
+      const child = new Node(NODE_TYPES.CON, new St.Bin());
+      ctx.tree.processTabbed(container, child, { stackedHeight: 35 }, 0);
+
+      expect(child.rect.height).toBeGreaterThanOrEqual(1);
+    });
+
+    it("should show all tabs at same position (only one visible)", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.TABBED;
+      container.rect = { x: 0, y: 0, width: 1000, height: 800 };
+
+      const child1 = new Node(NODE_TYPES.CON, new St.Bin());
+      const child2 = new Node(NODE_TYPES.CON, new St.Bin());
+      const child3 = new Node(NODE_TYPES.CON, new St.Bin());
+
+      container.childNodes = [child1, child2, child3];
+
+      const stackedHeight = 35;
+      const params = { stackedHeight };
+
+      ctx.tree.processTabbed(container, child1, params, 0);
+      ctx.tree.processTabbed(container, child2, params, 1);
+      ctx.tree.processTabbed(container, child3, params, 2);
+
+      // All tabs should have same rect (overlapping, only one shown)
+      [child1, child2, child3].forEach((child) => {
+        expect(child.rect.x).toBe(0);
+        expect(child.rect.y).toBe(stackedHeight);
+        expect(child.rect.width).toBe(1000);
+        expect(child.rect.height).toBe(800 - stackedHeight);
+      });
+    });
+
+    it("should respect container offset", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.TABBED;
+      container.rect = { x: 200, y: 100, width: 800, height: 600 };
+      container.childNodes = [new Node(NODE_TYPES.CON, new St.Bin())];
+
+      const child = new Node(NODE_TYPES.CON, new St.Bin());
+      const params = { stackedHeight: 0 };
+
+      ctx.tree.processTabbed(container, child, params, 0);
+
+      expect(child.rect.x).toBe(200);
+      expect(child.rect.y).toBe(100);
+    });
+  });
+
+  describe("tab-position: bottom", () => {
+    let bottomCtx;
+
+    beforeEach(() => {
+      bottomCtx = createTreeFixture({
+        settings: { "tab-position": "bottom" },
+        fullExtWm: true,
+      });
+      bottomCtx.extWm.calculateGaps = vi.fn(() => 10);
+    });
+
+    afterEach(() => {
+      bottomCtx.cleanup();
+    });
+
+    it("places stacked content at the container top with the bar column at the bottom", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.STACKED;
+      container.rect = { x: 0, y: 0, width: 1000, height: 800 };
+
+      const child1 = new Node(NODE_TYPES.CON, new St.Bin());
+      const child2 = new Node(NODE_TYPES.CON, new St.Bin());
+      const child3 = new Node(NODE_TYPES.CON, new St.Bin());
+      container.childNodes = [child1, child2, child3];
+
+      const stackHeight = 35;
+      const params = {
+        stackedHeight: stackHeight,
+        tiledChildren: [child1, child2, child3],
+      };
+      const totalBars = stackHeight * 3;
+
+      bottomCtx.tree.processStacked(container, child1, params, 0);
+      bottomCtx.tree.processStacked(container, child2, params, 1);
+      bottomCtx.tree.processStacked(container, child3, params, 2);
+
+      // Bottom: content sits at the container top, the bar column fills the bottom.
+      [child1, child2, child3].forEach((child) => {
+        expect(child.rect.x).toBe(0);
+        expect(child.rect.y).toBe(container.rect.y);
+        expect(child.rect.width).toBe(1000);
+        expect(child.rect.height).toBe(800 - totalBars);
+      });
+
+      // Decoration anchored near the bottom of the (gap-shrunk) render rect.
+      const renderRect = bottomCtx.tree.processGap(container);
+      expect(container.decoration.height).toBe(totalBars);
+      expect(container.decoration.y).toBe(renderRect.y + renderRect.height - totalBars);
+    });
+
+    it("places tabbed content at the container top with the tab strip at the bottom", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.TABBED;
+      container.rect = { x: 0, y: 0, width: 1000, height: 800 };
+      container.childNodes = [
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+      ];
+
+      const child = new Node(NODE_TYPES.CON, new St.Bin());
+      const stackedHeight = 35;
+      const params = { stackedHeight, tiledChildren: container.childNodes };
+
+      bottomCtx.tree.processTabbed(container, child, params, 0);
+
+      expect(child.rect.x).toBe(0);
+      expect(child.rect.y).toBe(container.rect.y);
+      expect(child.rect.width).toBe(1000);
+      expect(child.rect.height).toBe(800 - stackedHeight);
+
+      const renderRect = bottomCtx.tree.processGap(container);
+      expect(container.decoration.y).toBe(renderRect.y + renderRect.height - stackedHeight);
+    });
+
+    // nextile-aydd clamp must still hold at the bottom: a tiny container yields height >= 1.
+    it("keeps content height >= 1 for a tiny container (stacked, bottom)", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.STACKED;
+      container.rect = { x: 0, y: 0, width: 1000, height: 100 };
+
+      const children = [
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+      ];
+      container.childNodes = children;
+
+      const params = { stackedHeight: 35, tiledChildren: children };
+
+      children.forEach((child, i) => {
+        bottomCtx.tree.processStacked(container, child, params, i);
+        expect(child.rect.height).toBeGreaterThanOrEqual(1);
+        // Content still starts at the container top in the overflow regime.
+        expect(child.rect.y).toBe(container.rect.y);
+      });
+    });
+
+    it("keeps content height >= 1 for a tiny container (tabbed, bottom)", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.TABBED;
+      container.rect = { x: 0, y: 0, width: 1000, height: 20 };
+      container.childNodes = [
+        new Node(NODE_TYPES.CON, new St.Bin()),
+        new Node(NODE_TYPES.CON, new St.Bin()),
+      ];
+
+      const child = new Node(NODE_TYPES.CON, new St.Bin());
+      bottomCtx.tree.processTabbed(container, child, { stackedHeight: 35 }, 0);
+
+      expect(child.rect.height).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe("processGap", () => {
+    it("should add gaps to all sides", () => {
+      const node = new Node(NODE_TYPES.CON, new St.Bin());
+      node.rect = { x: 0, y: 0, width: 1000, height: 800 };
+
+      const gap = 10;
+      ctx.extWm.calculateGaps.mockReturnValue(gap);
+
+      const result = ctx.tree.processGap(node);
+
+      // Position should be offset by gap
+      expect(result.x).toBe(gap);
+      expect(result.y).toBe(gap);
+
+      // Size should be reduced by gap * 2
+      expect(result.width).toBe(1000 - gap * 2);
+      expect(result.height).toBe(800 - gap * 2);
+    });
+
+    it("should handle larger gaps", () => {
+      const node = new Node(NODE_TYPES.CON, new St.Bin());
+      node.rect = { x: 100, y: 50, width: 1000, height: 800 };
+
+      const gap = 20;
+      ctx.extWm.calculateGaps.mockReturnValue(gap);
+
+      const result = ctx.tree.processGap(node);
+
+      expect(result.x).toBe(120); // 100 + 20
+      expect(result.y).toBe(70); // 50 + 20
+      expect(result.width).toBe(960); // 1000 - 40
+      expect(result.height).toBe(760); // 800 - 40
+    });
+
+    it("should not add gap if rect too small", () => {
+      const node = new Node(NODE_TYPES.CON, new St.Bin());
+      node.rect = { x: 0, y: 0, width: 15, height: 15 };
+
+      const gap = 10;
+      ctx.extWm.calculateGaps.mockReturnValue(gap);
+
+      const result = ctx.tree.processGap(node);
+
+      // Gap * 2 (20) > width (15), so no gap applied
+      expect(result.x).toBe(0);
+      expect(result.y).toBe(0);
+      expect(result.width).toBe(15);
+      expect(result.height).toBe(15);
+    });
+
+    it("should handle zero gap", () => {
+      const node = new Node(NODE_TYPES.CON, new St.Bin());
+      node.rect = { x: 10, y: 20, width: 1000, height: 800 };
+
+      ctx.extWm.calculateGaps.mockReturnValue(0);
+
+      const result = ctx.tree.processGap(node);
+
+      // No gap, should return original rect
+      expect(result).toEqual({ x: 10, y: 20, width: 1000, height: 800 });
+    });
+  });
+
+  describe("Layout Integration", () => {
+    it("should compute sizes and apply split layout", () => {
+      const container = new Node(NODE_TYPES.CON, new St.Bin());
+      container.layout = LAYOUT_TYPES.HSPLIT;
+      container.rect = { x: 0, y: 0, width: 1200, height: 600 };
+
+      const child1 = new Node(NODE_TYPES.CON, new St.Bin());
+      child1.percent = 0.6;
+      const child2 = new Node(NODE_TYPES.CON, new St.Bin());
+      child2.percent = 0.4;
+
+      const children = [child1, child2];
+      const sizes = ctx.tree.computeSizes(container, children);
+      const params = { sizes };
+
+      ctx.tree.processSplit(container, child1, params, 0);
+      ctx.tree.processSplit(container, child2, params, 1);
+
+      // Should respect percentages
+      expect(child1.rect.width).toBe(720); // 1200 * 0.6
+      expect(child2.rect.width).toBe(480); // 1200 * 0.4
+      expect(child1.rect.x).toBe(0);
+      expect(child2.rect.x).toBe(720);
+    });
+  });
+
+  // nextile-1a5: the stacked/tabbed title-bar height is read from a gsetting
+  // (DPI-scaled) instead of a hardcoded 35, and feeds params.stackedHeight in
+  // processNode.
+  describe("stackedBarHeight (nextile-1a5)", () => {
+    afterEach(() => __resetScaleFactor());
+
+    it("defaults to the schema default (35) when unconfigured", () => {
+      // createTreeFixture seeds DEFAULT_SETTINGS (stacked-tab-bar-height: 35).
+      expect(ctx.tree.stackedBarHeight()).toBe(35);
+    });
+
+    it("reflects a configured height", () => {
+      const custom = createTreeFixture({ settings: { "stacked-tab-bar-height": 50 } });
+      expect(custom.tree.stackedBarHeight()).toBe(50);
+      custom.cleanup();
+    });
+
+    it("scales the configured height by the DPI factor", () => {
+      __setScaleFactor(2);
+      const custom = createTreeFixture({ settings: { "stacked-tab-bar-height": 40 } });
+      expect(custom.tree.stackedBarHeight()).toBe(80); // 40 * 2
+      custom.cleanup();
+    });
+  });
+
+  // nextile-qy65: Shell.App.create_icon_texture(size) takes a LOGICAL icon-size that
+  // St scales by scale_factor internally. Passing 24*dpi() double-scales the icon
+  // (96 physical at 2x) so it overflows/distorts the dpi-scaled tab bar. The tab
+  // bar height IS dpi-scaled (35*2=70), but the icon size must NOT be.
+  describe("tab icon scaling (nextile-qy65)", () => {
+    afterEach(() => __resetScaleFactor());
+
+    it("passes the logical icon size (24), not 24*dpi(), so St scales it once", () => {
+      __setScaleFactor(2);
+      // _buildTabBase is node-type agnostic (icon + title scaffold); a CON node
+      // avoids the WINDOW constructor's compositor/app wiring.
+      const node = new Node(NODE_TYPES.CON, new St.Bin());
+      const app = { create_icon_texture: vi.fn(() => new St.Bin()) };
+
+      node._buildTabBase(app, "Title");
+
+      // Before nextile-qy65 this was called with 48 (24*dpi()=48), which St then
+      // scaled again to 96 physical — double-scaled against the 70px bar.
+      expect(app.create_icon_texture).toHaveBeenCalledWith(24);
+      // Sanity: the bar the icon must fit IS dpi-scaled to 70, proving 24 is deliberate.
+      expect(ctx.tree.stackedBarHeight()).toBe(70); // 35 * 2
+    });
+  });
+});

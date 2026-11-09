@@ -1,0 +1,112 @@
+# Release workflow: build the GNOME Shell extension, attest its provenance, and
+# publish it as a GitHub Release.
+#
+# Trigger: push a tag matching v* (the repo's CalVer vYYYY.M.N scheme, e.g.
+# v2026.11.0). The tagged commit is built into nextile@fresp.github.io.zip, the
+# extension zip users install with `gnome-extensions install` (see RELEASING.md).
+#
+# The zip is checksummed (SHA256SUMS) and gets a keyless build-provenance
+# attestation (Sigstore via GitHub OIDC — no signing keys to manage), verifiable
+# by users with `gh attestation verify`.
+#
+# workflow_dispatch on a BRANCH is a dry run: same build + attest, no Release (the
+# release step is gated on a tag ref). Dispatching with a tag selected does create
+# one, exactly like a tag push.
+
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Override git ref to build"
+        type: string
+        default: ""
+        required: false
+
+permissions:
+  contents: write # create the Release and upload assets
+  id-token: write # OIDC token for keyless attestation
+  attestations: write # write the provenance attestation
+
+jobs:
+  publishing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+        with:
+          # Full history: `make build` runs `git shortlog -sne HEAD` to generate
+          # the contributors list (lib/prefs/metadata.js).
+          fetch-depth: 0
+          ref: ${{ inputs.ref }}
+
+      - name: Install linux tools
+        run: |
+          sudo apt-get update
+          # libglib2.0-bin provides glib-compile-schemas (needed by `make build`).
+          sudo apt-get install -y --no-install-recommends gettext make zip libglib2.0-bin
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install Node.js project dependencies
+        run: npm ci
+
+      - name: Run unit tests (release gate)
+        run: npm test
+
+      - name: Build distributable zip
+        # Stamp the tag into metadata.json's version-name for release builds only
+        # (build-target guard; a plain `make dist` leaves committed metadata clean).
+        env:
+          NEXTILE_VERSION_NAME: ${{ github.ref_name }}
+        run: make dist
+
+      - name: Generate checksum
+        run: sha256sum "nextile@fresp.github.io.zip" > SHA256SUMS
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: "nextile@fresp.github.io.zip"
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: nextile-gnome-extension
+          path: |
+            nextile@fresp.github.io.zip
+            SHA256SUMS
+
+      - name: Generate release notes
+        # Runs on dispatch too, so a dry run still shows what the notes would say
+        # (check the step log). Needs the tags + history that fetch-depth: 0 gives us.
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          ./.github/scripts/release-notes.sh "${{ github.ref_name }}" | tee RELEASE_NOTES.md
+
+      - name: Publish GitHub Release
+        # Only when built from a tag (tag push, or a tag selected for dispatch).
+        # A branch dispatch is a dry run: build + attest, no Release.
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
+        with:
+          # A -beta/-rc tag (v2026.11.0-beta.1, v2026.11.0-rc.1) is a
+          # pre-release: flagged as such and never shown as "Latest". A bare tag
+          # (v2026.11.0) is the stable cut. See RELEASING.md.
+          prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
+          files: |
+            nextile@fresp.github.io.zip
+            SHA256SUMS
+          # Notes come from conventional-commit subjects, not PRs: GitHub's
+          # generate_release_notes is PR-derived and this repo commits straight to
+          # main, so it shipped empty bodies (beta.1 and beta.2 were link-only).
+          body_path: RELEASE_NOTES.md
+          fail_on_unmatched_files: true

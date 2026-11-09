@@ -1,0 +1,589 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { WINDOW_MODES } from "../../../lib/extension/window.js";
+import { NODE_TYPES, LAYOUT_TYPES } from "../../../lib/extension/tree.js";
+import {
+  createMockWindow,
+  createWindowManagerFixture,
+  getWorkspaceAndMonitor,
+  createWindowNode,
+} from "../../mocks/helpers/index.js";
+
+/**
+ * WindowManager movement and positioning tests
+ *
+ * Tests for window positioning and movement methods including:
+ * - move(): Move/resize window to specific rectangle
+ * - moveCenter(): Center window on screen
+ * - rectForMonitor(): Calculate window rect for monitor switching
+ */
+describe("WindowManager - Movement & Positioning", () => {
+  let ctx;
+
+  beforeEach(() => {
+    ctx = createWindowManagerFixture({
+      settings: {
+        "tiling-mode-enabled": true,
+        "focus-on-hover-enabled": false,
+      },
+      globals: {
+        display: {
+          monitorCount: 2,
+          monitorGeometries: {
+            0: { x: 0, y: 0, width: 1920, height: 1080 },
+            1: { x: 1920, y: 0, width: 2560, height: 1440 },
+          },
+        },
+      },
+    });
+  });
+
+  // Convenience accessor
+  const wm = () => ctx.windowManager;
+
+  describe("first frame (nextile#588)", () => {
+    it("leaves a window alone until its actor paints the first frame", () => {
+      const metaWindow = createMockWindow();
+      const windowActor = metaWindow.get_compositor_private();
+      let onFirstFrame;
+      vi.spyOn(windowActor, "connect").mockImplementation((signal, callback) => {
+        if (signal === "first-frame") onFirstFrame = callback;
+        return 77;
+      });
+      const moveResizeSpy = vi.spyOn(metaWindow, "move_resize_frame");
+      const unmaximizeSpy = vi.spyOn(metaWindow, "unmaximize");
+      const renderTreeSpy = vi.spyOn(wm(), "renderTree").mockImplementation(() => {});
+      const rect = { x: 100, y: 100, width: 800, height: 600 };
+
+      wm()._awaitFirstFrame(metaWindow, () => {
+        // Tracking can already move the window (moveCenter of the prefs window)
+        wm().move(metaWindow, rect);
+        // ...and binds the actor's tracked signals
+        windowActor.actorSignals = [1];
+      });
+      wm().move(metaWindow, rect);
+
+      // disable() releases the handler with the actor's other signals
+      expect(windowActor.actorSignals).toEqual([1, 77]);
+      expect(moveResizeSpy).not.toHaveBeenCalled();
+      expect(unmaximizeSpy).not.toHaveBeenCalled();
+
+      onFirstFrame();
+      expect(renderTreeSpy).toHaveBeenCalledWith("window-first-frame", true);
+      wm().move(metaWindow, rect);
+      expect(moveResizeSpy).toHaveBeenCalled();
+    });
+
+    it("drops the guard for a window NexTile doesn't track", () => {
+      const metaWindow = createMockWindow();
+      const windowActor = metaWindow.get_compositor_private();
+      vi.spyOn(windowActor, "connect").mockReturnValue(77);
+      const disconnectSpy = vi.spyOn(windowActor, "disconnect");
+
+      wm()._awaitFirstFrame(metaWindow, () => {});
+
+      expect(disconnectSpy).toHaveBeenCalledWith(77);
+      expect(metaWindow.nextileAwaitingFirstFrame).toBe(false);
+    });
+
+    it("drops the guard when disable() releases the handler before the first frame", () => {
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
+      const windowActor = metaWindow.get_compositor_private();
+      vi.spyOn(windowActor, "connect").mockReturnValue(77);
+      const moveResizeSpy = vi.spyOn(metaWindow, "move_resize_frame");
+      const rect = { x: 100, y: 100, width: 800, height: 600 };
+
+      wm()._awaitFirstFrame(metaWindow, () => {
+        ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+        windowActor.actorSignals = [1];
+      });
+      wm()._signalsBound = true; // the test context never ran _bindSignals
+      wm()._removeSignals();
+
+      wm().move(metaWindow, rect);
+      expect(moveResizeSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe("move", () => {
+    it("should not move a window under a live interactive grab", () => {
+      // nextile-r2k9: the guard reads NexTile's own grab state (node.grabMode set by
+      // _handleGrabOpBegin), not the phantom metaWindow.grabbed property that
+      // production never sets.
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
+      const node = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      node.mode = WINDOW_MODES.TILE;
+      node.grabMode = "RESIZING";
+
+      const moveFrameSpy = vi.spyOn(metaWindow, "move_frame");
+      const rect = { x: 100, y: 100, width: 800, height: 600 };
+
+      wm().move(metaWindow, rect);
+
+      expect(moveFrameSpy).not.toHaveBeenCalled();
+    });
+
+    it("should unmaximize a maximized window before moving", () => {
+      const metaWindow = createMockWindow({
+        maximized_horizontally: true,
+        maximized_vertically: true,
+      });
+      const unmaximizeSpy = vi.spyOn(metaWindow, "unmaximize");
+      const rect = { x: 100, y: 100, width: 800, height: 600 };
+
+      wm().move(metaWindow, rect);
+
+      expect(unmaximizeSpy).toHaveBeenCalledOnce();
+    });
+
+    // GNOME 51: an unmaximize request on a non-maximized window turns into a
+    // meta_window_move_resize() and crashed gnome-shell on every render.
+    it("should not send an unmaximize request for a non-maximized window", () => {
+      const metaWindow = createMockWindow();
+      const unmaximizeSpy = vi.spyOn(metaWindow, "unmaximize");
+      const setUnmaximizeSpy = vi.spyOn(metaWindow, "set_unmaximize_flags");
+      const rect = { x: 100, y: 100, width: 800, height: 600 };
+
+      wm().move(metaWindow, rect);
+
+      expect(unmaximizeSpy).not.toHaveBeenCalled();
+      expect(setUnmaximizeSpy).not.toHaveBeenCalled();
+    });
+
+    it("should remove transitions from window actor", () => {
+      const metaWindow = createMockWindow();
+      const windowActor = metaWindow.get_compositor_private();
+      const removeTransitionsSpy = vi.spyOn(windowActor, "remove_all_transitions");
+      const rect = { x: 100, y: 100, width: 800, height: 600 };
+
+      wm().move(metaWindow, rect);
+
+      expect(removeTransitionsSpy).toHaveBeenCalled();
+    });
+
+    it("moves and resizes in one request, never moving first (#544)", () => {
+      const metaWindow = createMockWindow();
+      const moveFrameSpy = vi.spyOn(metaWindow, "move_frame");
+      const moveResizeSpy = vi.spyOn(metaWindow, "move_resize_frame");
+      const rect = { x: 100, y: 200, width: 800, height: 600 };
+
+      wm().move(metaWindow, rect);
+
+      expect(moveFrameSpy).not.toHaveBeenCalled();
+      expect(moveResizeSpy).toHaveBeenCalledWith(true, 100, 200, 800, 600);
+    });
+
+    it("should call move_resize_frame with complete rect", () => {
+      const metaWindow = createMockWindow();
+      const moveResizeSpy = vi.spyOn(metaWindow, "move_resize_frame");
+      const rect = { x: 150, y: 250, width: 1024, height: 768 };
+
+      wm().move(metaWindow, rect);
+
+      expect(moveResizeSpy).toHaveBeenCalledWith(true, 150, 250, 1024, 768);
+    });
+
+    it("should handle window without compositor actor", () => {
+      const metaWindow = createMockWindow();
+      metaWindow.get_compositor_private = vi.fn(() => null);
+      const moveFrameSpy = vi.spyOn(metaWindow, "move_frame");
+      const rect = { x: 100, y: 100, width: 800, height: 600 };
+
+      wm().move(metaWindow, rect);
+
+      // Should still try to unmaximize but not move the window
+      expect(moveFrameSpy).not.toHaveBeenCalled();
+    });
+
+    it("re-requests the frame's own rect while an earlier request is pending", () => {
+      // Wayland: the frame changes only when the app commits a request it was sent.
+      const b = { x: 0, y: 0, width: 960, height: 1080 };
+      const metaWindow = createMockWindow({ rect: b });
+      const moveResizeSpy = vi.spyOn(metaWindow, "move_resize_frame").mockImplementation(() => {});
+
+      wm().move(metaWindow, { x: 0, y: 0, width: 640, height: 1080 });
+      wm().move(metaWindow, b); // frame still at b, but the app is about to commit the 640
+      expect(moveResizeSpy).toHaveBeenLastCalledWith(true, 0, 0, 960, 1080);
+
+      moveResizeSpy.mockClear();
+      wm().move(metaWindow, b);
+      expect(moveResizeSpy).not.toHaveBeenCalled();
+    });
+
+    it("forgets the last request when NexTile releases the window", () => {
+      const b = { x: 0, y: 0, width: 960, height: 1080 };
+      const metaWindow = createMockWindow({ rect: b });
+      const moveResizeSpy = vi.spyOn(metaWindow, "move_resize_frame");
+      wm().move(metaWindow, { x: 0, y: 0, width: 640, height: 1080 });
+      wm()._releaseWindow(metaWindow);
+      metaWindow.move_resize_frame(true, 0, 0, 960, 1080); // resized while untracked
+
+      moveResizeSpy.mockClear();
+      wm().move(metaWindow, b);
+      expect(moveResizeSpy).not.toHaveBeenCalled();
+    });
+
+    it("should handle various rect sizes", () => {
+      const metaWindow = createMockWindow();
+      const moveResizeSpy = vi.spyOn(metaWindow, "move_resize_frame");
+
+      // Small window
+      wm().move(metaWindow, { x: 0, y: 0, width: 200, height: 150 });
+      expect(moveResizeSpy).toHaveBeenCalledWith(true, 0, 0, 200, 150);
+
+      // Large window
+      wm().move(metaWindow, { x: 0, y: 0, width: 1920, height: 1080 });
+      expect(moveResizeSpy).toHaveBeenCalledWith(true, 0, 0, 1920, 1080);
+
+      // Positioned window
+      wm().move(metaWindow, { x: 500, y: 300, width: 640, height: 480 });
+      expect(moveResizeSpy).toHaveBeenCalledWith(true, 500, 300, 640, 480);
+    });
+  });
+
+  describe("moveCenter", () => {
+    it("should center window on current monitor", () => {
+      const metaWindow = createMockWindow({
+        rect: { x: 100, y: 100, width: 800, height: 600 },
+      });
+
+      const moveSpy = vi.spyOn(wm(), "move");
+
+      wm().moveCenter(metaWindow);
+
+      expect(moveSpy).toHaveBeenCalled();
+      const callArgs = moveSpy.mock.calls[0];
+      const rect = callArgs[1];
+
+      // Work area is 1920x1080 at origin, so centering an 800x600 window yields:
+      //   x = 1920/2 - 800/2 = 560, y = 1080/2 - 600/2 = 240
+      expect(rect.width).toBe(800);
+      expect(rect.height).toBe(600);
+      expect(rect.x).toBe((1920 - 800) / 2);
+      expect(rect.y).toBe((1080 - 600) / 2);
+    });
+
+    it("should preserve window dimensions when centering", () => {
+      const metaWindow = createMockWindow({
+        rect: { x: 0, y: 0, width: 1024, height: 768 },
+      });
+
+      const moveSpy = vi.spyOn(wm(), "move");
+
+      wm().moveCenter(metaWindow);
+
+      const rect = moveSpy.mock.calls[0][1];
+      expect(rect.width).toBe(1024);
+      expect(rect.height).toBe(768);
+    });
+
+    it("should center small windows correctly", () => {
+      const metaWindow = createMockWindow({
+        rect: { x: 500, y: 500, width: 400, height: 300 },
+      });
+
+      const moveSpy = vi.spyOn(wm(), "move");
+
+      wm().moveCenter(metaWindow);
+
+      const rect = moveSpy.mock.calls[0][1];
+
+      // Dimensions should be preserved
+      expect(rect.width).toBe(400);
+      expect(rect.height).toBe(300);
+      // Centered on the 1920x1080 work area: x = (1920-400)/2, y = (1080-300)/2
+      expect(rect.x).toBe((1920 - 400) / 2);
+      expect(rect.y).toBe((1080 - 300) / 2);
+    });
+
+    it("should center large windows correctly", () => {
+      const metaWindow = createMockWindow({
+        rect: { x: 0, y: 0, width: 1600, height: 900 },
+      });
+
+      const moveSpy = vi.spyOn(wm(), "move");
+
+      wm().moveCenter(metaWindow);
+
+      const rect = moveSpy.mock.calls[0][1];
+
+      // Dimensions should be preserved
+      expect(rect.width).toBe(1600);
+      expect(rect.height).toBe(900);
+    });
+  });
+
+  describe("rectForMonitor", () => {
+    it("should calculate rect for monitor with same dimensions", () => {
+      // Both monitors 1920x1080
+      const metaWindow = createMockWindow();
+      metaWindow.get_work_area_current_monitor = vi.fn(() => ({
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }));
+      metaWindow.get_work_area_for_monitor = vi.fn(() => ({
+        x: 1920,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }));
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      const { nodeWindow } = createWindowNode(ctx.tree, monitor, { mode: "TILE" });
+      nodeWindow.rect = { x: 100, y: 100, width: 800, height: 600 };
+
+      const rect = wm().rectForMonitor(nodeWindow, 1);
+
+      // Same size monitors, so dimensions should be preserved
+      expect(rect.width).toBe(800);
+      expect(rect.height).toBe(600);
+    });
+
+    it("should scale rect for larger monitor", () => {
+      // Current: 1920x1080, Target: 2560x1440
+      const metaWindow = createMockWindow();
+      metaWindow.get_work_area_current_monitor = vi.fn(() => ({
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }));
+      metaWindow.get_work_area_for_monitor = vi.fn(() => ({
+        x: 1920,
+        y: 0,
+        width: 2560,
+        height: 1440,
+      }));
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+      nodeWindow.rect = { x: 100, y: 100, width: 960, height: 540 };
+
+      const rect = wm().rectForMonitor(nodeWindow, 1);
+
+      // Width ratio: 2560/1920 = 1.333..., Height ratio: 1440/1080 = 1.333...
+      // New width: 960 * 1.333... = 1280
+      // New height: 540 * 1.333... = 720
+      expect(Math.round(rect.width)).toBe(1280);
+      expect(Math.round(rect.height)).toBe(720);
+    });
+
+    it("should scale rect for smaller monitor", () => {
+      // Current: 2560x1440, Target: 1920x1080
+      const metaWindow = createMockWindow();
+      metaWindow.get_work_area_current_monitor = vi.fn(() => ({
+        x: 0,
+        y: 0,
+        width: 2560,
+        height: 1440,
+      }));
+      metaWindow.get_work_area_for_monitor = vi.fn(() => ({
+        x: 2560,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }));
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+      nodeWindow.rect = { x: 100, y: 100, width: 1280, height: 720 };
+
+      const rect = wm().rectForMonitor(nodeWindow, 1);
+
+      // Width ratio: 1920/2560 = 0.75, Height ratio: 1080/1440 = 0.75
+      // New width: 1280 * 0.75 = 960
+      // New height: 720 * 0.75 = 540
+      expect(rect.width).toBe(960);
+      expect(rect.height).toBe(540);
+    });
+
+    it("should calculate position for horizontally adjacent monitors", () => {
+      // Monitor 0 at (0,0), Monitor 1 at (1920,0)
+      const metaWindow = createMockWindow();
+      metaWindow.get_work_area_current_monitor = vi.fn(() => ({
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }));
+      metaWindow.get_work_area_for_monitor = vi.fn(() => ({
+        x: 1920,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }));
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+      nodeWindow.rect = { x: 100, y: 100, width: 800, height: 600 };
+
+      const rect = wm().rectForMonitor(nodeWindow, 1);
+
+      // Y should remain proportional since y positions are same (0)
+      // X should be scaled: (100 / 1920) * 1920 + 1920 = 100 + 1920 = 2020
+      expect(rect.x).toBe(2020);
+      expect(rect.y).toBe(100);
+    });
+
+    it("should calculate position for vertically stacked monitors", () => {
+      // Monitor 0 at (0,0), Monitor 1 at (0,1080)
+      const metaWindow = createMockWindow();
+      metaWindow.get_work_area_current_monitor = vi.fn(() => ({
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }));
+      metaWindow.get_work_area_for_monitor = vi.fn(() => ({
+        x: 0,
+        y: 1080,
+        width: 1920,
+        height: 1080,
+      }));
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+      nodeWindow.rect = { x: 100, y: 100, width: 800, height: 600 };
+
+      const rect = wm().rectForMonitor(nodeWindow, 1);
+
+      // X should remain the same
+      // Y should be: (100 / 1080) * 1080 + 1080 = 100 + 1080 = 1180
+      expect(rect.x).toBe(100);
+      expect(Math.round(rect.y)).toBe(1180);
+    });
+
+    it("should handle floating window without rect", () => {
+      const metaWindow = createMockWindow({
+        rect: { x: 200, y: 200, width: 640, height: 480 },
+      });
+      metaWindow.get_work_area_current_monitor = vi.fn(() => ({
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }));
+      metaWindow.get_work_area_for_monitor = vi.fn(() => ({
+        x: 1920,
+        y: 0,
+        width: 2560,
+        height: 1440,
+      }));
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.FLOAT;
+      // No rect set on node, should use frame_rect from metaWindow
+
+      const rect = wm().rectForMonitor(nodeWindow, 1);
+
+      // Should use frame_rect and scale it
+      expect(rect).not.toBeNull();
+      // Width: 640 * (2560/1920) = 853.33...
+      // Height: 480 * (1440/1080) = 640
+      expect(Math.round(rect.width)).toBe(853);
+      expect(rect.height).toBe(640);
+    });
+
+    it("should handle complex monitor arrangements", () => {
+      // Monitor at different offset
+      const metaWindow = createMockWindow();
+      metaWindow.get_work_area_current_monitor = vi.fn(() => ({
+        x: 500,
+        y: 300,
+        width: 1920,
+        height: 1080,
+      }));
+      metaWindow.get_work_area_for_monitor = vi.fn(() => ({
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }));
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+      nodeWindow.rect = { x: 600, y: 400, width: 800, height: 600 };
+
+      const rect = wm().rectForMonitor(nodeWindow, 1);
+
+      // Should handle offset correctly
+      expect(rect).not.toBeNull();
+      // X: ((0 + 600 - 500) / 1920) * 1920 = (100 / 1920) * 1920 = 100
+      // Y: ((0 + 400 - 300) / 1080) * 1080 = (100 / 1080) * 1080 ≈ 100
+      expect(Math.round(rect.x)).toBe(100);
+      expect(Math.round(rect.y)).toBe(100);
+    });
+
+    // nextile-cm69: moving a window to a higher-x monitor from a source monitor
+    // that is NOT at x=0 (3+ monitor row) must land WITHIN the target monitor,
+    // not past its far edge. The old '>' branch used absolute rect.x directly.
+    it("places a window on the right monitor when moving off a non-origin middle monitor", () => {
+      // Three 1920-wide monitors at x=0 / 1920 / 3840; move from middle -> right.
+      const metaWindow = createMockWindow();
+      metaWindow.get_work_area_current_monitor = vi.fn(() => ({
+        x: 1920,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }));
+      metaWindow.get_work_area_for_monitor = vi.fn(() => ({
+        x: 3840,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }));
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+      // Window sits on the middle monitor (absolute x ~ 2000).
+      nodeWindow.rect = { x: 2000, y: 100, width: 800, height: 600 };
+
+      const rect = wm().rectForMonitor(nodeWindow, 2);
+
+      // Must land within the right monitor [3840, 5760), not ~5840 (off-screen).
+      expect(rect.x).toBeGreaterThanOrEqual(3840);
+      expect(rect.x).toBeLessThan(5760);
+      // ((2000 - 1920) / 1920) * 1920 + 3840 = 80 + 3840 = 3920
+      expect(Math.round(rect.x)).toBe(3920);
+    });
+
+    // nextile-cm69: simple same-size case (origin source -> adjacent target) stays
+    // unchanged, locking the affine remap's backward-compatible behavior.
+    it("places a window correctly moving from the origin monitor to an adjacent one", () => {
+      const metaWindow = createMockWindow();
+      metaWindow.get_work_area_current_monitor = vi.fn(() => ({
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }));
+      metaWindow.get_work_area_for_monitor = vi.fn(() => ({
+        x: 1920,
+        y: 0,
+        width: 1920,
+        height: 1080,
+      }));
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+      nodeWindow.rect = { x: 100, y: 100, width: 800, height: 600 };
+
+      const rect = wm().rectForMonitor(nodeWindow, 1);
+
+      // ((100 - 0) / 1920) * 1920 + 1920 = 2020
+      expect(rect.x).toBe(2020);
+      expect(rect.y).toBe(100);
+    });
+  });
+});

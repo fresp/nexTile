@@ -1,0 +1,124 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { NODE_TYPES } from "../../lib/extension/tree.js";
+import { WINDOW_MODES } from "../../lib/extension/window.js";
+import {
+  createMockWindow,
+  createWindowManagerFixture,
+  getWorkspaceAndMonitor,
+} from "../mocks/helpers/index.js";
+import { Rectangle } from "../mocks/gnome/Meta.js";
+
+/**
+ * Bug #530 regression: move() called windowActor.remove_all_transitions()
+ * unconditionally. NexTile itself never adds window-actor transitions, so the
+ * only effect on a freshly created window was to strip the map/open effect
+ * (GNOME Shell's own or an animation extension's like Burn My Windows) when
+ * the first tiling placement landed. The first placement of a new window
+ * (metaWindow.firstRender, set in trackWindow) must leave transitions alone.
+ */
+describe("Bug #530: first placement preserves the window-open animation", () => {
+  let ctx;
+
+  beforeEach(() => {
+    ctx = createWindowManagerFixture();
+  });
+
+  const wm = () => ctx.windowManager;
+  const rect = { x: 0, y: 0, width: 960, height: 1080 };
+
+  function newTrackedWindow() {
+    const { monitor } = getWorkspaceAndMonitor(ctx);
+    const meta = createMockWindow({
+      rect: new Rectangle(rect),
+      workspace: ctx.workspaces[0],
+    });
+    const node = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, meta);
+    node.mode = WINDOW_MODES.TILE;
+    return { meta, node };
+  }
+
+  // Note (nextile-wsc #351): move() now skips entirely when the window already
+  // sits at the target rect, so these tests move to a rect that DIFFERS from
+  // the current frame - the #530 contract is "a real first placement keeps
+  // transitions; later real moves strip them". No-op moves never strip
+  // (covered by bug-351-noop-move-flicker.test.js).
+  const otherRect = { x: 960, y: 0, width: 960, height: 1080 };
+
+  it("first move of a freshly created window preserves actor transitions", () => {
+    const { meta } = newTrackedWindow();
+    const spy = vi.spyOn(meta.get_compositor_private(), "remove_all_transitions");
+
+    meta.firstRender = true;
+    wm().move(meta, otherRect);
+
+    expect(spy).not.toHaveBeenCalled();
+    expect(meta.get_frame_rect().x).toBe(otherRect.x);
+  });
+
+  it("subsequent moves strip transitions as before", () => {
+    const { meta } = newTrackedWindow();
+    const spy = vi.spyOn(meta.get_compositor_private(), "remove_all_transitions");
+
+    wm().move(meta, otherRect);
+
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it("the skip is one-shot even when the window is never tiled by render", () => {
+    // move() consumes the flag itself, so only the FIRST placement skips the
+    // strip, whichever path (render or a floating window's own move) places it.
+    const { meta } = newTrackedWindow();
+    const spy = vi.spyOn(meta.get_compositor_private(), "remove_all_transitions");
+
+    meta.firstRender = true;
+    wm().move(meta, otherRect);
+    wm().move(meta, rect);
+
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it("render path: first render preserves transitions, a real re-placement strips", () => {
+    const { meta } = newTrackedWindow();
+    const spy = vi.spyOn(meta.get_compositor_private(), "remove_all_transitions");
+
+    meta.firstRender = true;
+    ctx.tree.render("test-first");
+    expect(spy).not.toHaveBeenCalled();
+
+    // Drift the frame (e.g. an external move) so the next render re-places it.
+    meta.move_resize_frame(false, 5, 5, 300, 300);
+    ctx.tree.render("test-second");
+    expect(spy).toHaveBeenCalled();
+  });
+
+  it("a render before the first frame leaves firstRender for the real placement (nextile-b2f9)", () => {
+    // On Wayland window-created (and the wm-class render) arrive before the
+    // first buffer; move() sends no geometry then, so it must not consume the flag.
+    const { meta } = newTrackedWindow();
+    const spy = vi.spyOn(meta.get_compositor_private(), "remove_all_transitions");
+    const moveResizeSpy = vi.spyOn(meta, "move_resize_frame");
+    meta.firstRender = true;
+    meta.nextileAwaitingFirstFrame = true;
+
+    ctx.tree.render("before-first-frame");
+    expect(moveResizeSpy).not.toHaveBeenCalled();
+    expect(meta.firstRender).toBe(true);
+
+    meta.nextileAwaitingFirstFrame = false;
+    ctx.tree.render("window-first-frame");
+    expect(moveResizeSpy).toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("a first placement that finds the window already in place still consumes firstRender", () => {
+    const { meta } = newTrackedWindow();
+    const spy = vi.spyOn(meta.get_compositor_private(), "remove_all_transitions");
+    meta.firstRender = true;
+
+    wm().move(meta, rect); // already there: no geometry sent
+    expect(meta.firstRender).toBe(false);
+
+    wm().move(meta, otherRect);
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+});

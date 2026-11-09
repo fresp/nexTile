@@ -1,0 +1,102 @@
+import { describe, it, expect, beforeEach } from "vitest";
+import { Keybindings } from "../../lib/extension/keybindings.js";
+
+/**
+ * Bug nextile-3ilf (audit-2026-07 / C12): the "Shift" drag-tile modifier compared the
+ * pointer modifier state to 2 / 258, but Clutter/X11 SHIFT_MASK is 1<<0 = 1 (with the
+ * pointer-grabbed bit 256 -> 257). The value 2 is LOCK_MASK (Caps Lock). So holding
+ * Shift while dragging (state 257 = SHIFT|BUTTON1) never triggered tiling, while
+ * latching Caps Lock (state 258) wrongly did.
+ *
+ * Root cause: keybindings.js allowDragDropTile() "Shift" case used 2 / 258.
+ * Fix: use 1 / 257 (SHIFT_MASK / SHIFT_MASK|grabbed), matching Ctrl=4, Alt=8, Super=64.
+ */
+describe("Bug nextile-3ilf: Shift drag-tile modifier uses SHIFT_MASK (1/257)", () => {
+  let keybindings;
+  let mockExt;
+
+  beforeEach(() => {
+    mockExt = {
+      extWm: {
+        command: () => {},
+        getPointer: () => [0, 0, 0],
+      },
+      kbdSettings: {
+        get_string: () => "Shift",
+        get_strv: () => [],
+      },
+      settings: {
+        get_uint: () => 10,
+        get_string: () => "",
+        get_boolean: () => false,
+      },
+    };
+    keybindings = new Keybindings(mockExt);
+  });
+
+  const withState = (state) => {
+    mockExt.extWm.getPointer = () => [0, 0, state];
+  };
+
+  it("allows tiling when Shift is held (SHIFT_MASK = 1)", () => {
+    withState(1);
+    expect(keybindings.allowDragDropTile()).toBe(true);
+  });
+
+  it("allows tiling when Shift is held during a pointer grab (1 + 256 = 257)", () => {
+    withState(257);
+    expect(keybindings.allowDragDropTile()).toBe(true);
+  });
+
+  it("does NOT tile on Caps Lock alone (LOCK_MASK = 2)", () => {
+    withState(2);
+    expect(keybindings.allowDragDropTile()).toBe(false);
+  });
+
+  it("does NOT tile on Caps Lock during a grab (2 + 256 = 258)", () => {
+    withState(258);
+    expect(keybindings.allowDragDropTile()).toBe(false);
+  });
+});
+
+/**
+ * Bug nextile-gqol: the pointer modifier state is the effective xkb mask, so it
+ * carries locked modifiers. With Num Lock (MOD2_MASK = 16) or Caps Lock
+ * (LOCK_MASK = 2) on, the exact-equality check never matched and drag-drop
+ * tiling never triggered for any non-"None" modifier setting.
+ */
+describe("Bug nextile-gqol: drag-tile modifier ignores Num Lock and Caps Lock", () => {
+  const GRABBED = 256;
+  const NUM_LOCK = 16;
+  const CAPS_LOCK = 2;
+  const MODIFIERS = { Super: 64, Alt: 8, Ctrl: 4, Shift: 1 };
+
+  let mockExt;
+  let keybindings;
+
+  const setup = (tileModifier, state) => {
+    mockExt = {
+      extWm: { command: () => {}, getPointer: () => [0, 0, state] },
+      kbdSettings: { get_string: () => tileModifier, get_strv: () => [] },
+      settings: { get_uint: () => 10, get_string: () => "", get_boolean: () => false },
+    };
+    keybindings = new Keybindings(mockExt);
+  };
+
+  for (const [name, mask] of Object.entries(MODIFIERS)) {
+    it(`${name}: tiles with Num Lock on`, () => {
+      setup(name, mask | GRABBED | NUM_LOCK);
+      expect(keybindings.allowDragDropTile()).toBe(true);
+    });
+
+    it(`${name}: tiles with Caps Lock on`, () => {
+      setup(name, mask | GRABBED | CAPS_LOCK);
+      expect(keybindings.allowDragDropTile()).toBe(true);
+    });
+
+    it(`${name}: does NOT tile on Num Lock without the modifier`, () => {
+      setup(name, GRABBED | NUM_LOCK);
+      expect(keybindings.allowDragDropTile()).toBe(false);
+    });
+  }
+});

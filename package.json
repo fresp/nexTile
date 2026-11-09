@@ -1,0 +1,68 @@
+{
+  "name": "nextile",
+  "version": "2026.11.0",
+  "description": "NexTile - Tiling Extension for GNOME",
+  "main": "extension.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "prettier --list-different \"./**/*.{js,jsx,ts,tsx,json}\"",
+    "lint:e2e": "eslint tests/e2e/framework",
+    "lint:src": "eslint lib extension.js prefs.js",
+    "pretypecheck": "true  # metadata target kept for compat; lib/prefs/metadata.js is shipped",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "prepare": "husky install",
+    "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,json}\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fresp/nextile.git"
+  },
+  "keywords": [
+    "gnome",
+    "nextile",
+    "tiling",
+    "javascript",
+    "gnome-shell"
+  ],
+  "author": "Jose Maranan",
+  "contributors": [
+    "Benny Powers <web@bennypowers.com>"
+  ],
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/fresp/nextile/issues"
+  },
+  "homepage": "https://github.com/fresp/nextile#readme",
+  "devDependencies": {
+    "@girs/adw-1": "^1.4.2-3.2.7",
+    "@girs/clutter-13": "^13.0.0-3.2.7",
+    "@girs/gdk-4.0": "^4.0.0-3.2.7",
+    "@girs/gio-2.0": "^2.78.0-3.2.7",
+    "@girs/gjs": "^3.2.7",
+    "@girs/gnome-shell": "45.0.0-beta9",
+    "@girs/gobject-2.0": "^2.78.0-3.2.7",
+    "@girs/gtk-4.0": "^4.12.4-3.2.7",
+    "@girs/meta-13": "^13.0.0-3.2.7",
+    "@girs/st-13": "^13.0.0-3.2.7",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.39.4",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
+    "prettier": "^2.7.1",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8"
+  },
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown",
+    "**/*.{js,jsx}": "vitest related --run",
+    "lib/**/*.js": "eslint",
+    "{extension,prefs}.js": "eslint",
+    "tests/e2e/framework/*.js": "eslint",
+    "tests/e2e/**/*.py": [
+      "ruff format",
+      "ruff check --fix"
+    ]
+  }
+}

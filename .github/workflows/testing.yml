@@ -1,0 +1,89 @@
+# This workflow will install Node/NPM dependencies, run tests and lint source code
+
+# For more information see:
+#@ https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: testing
+permissions:
+  contents: read
+  pull-requests: write
+on:
+  push:
+    branches: ["main", "dev"]
+    paths-ignore:
+      - .git*
+      - .husky/**
+      - "*.md"
+  pull_request:
+    branches: ["main", "dev"]
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths-ignore:
+      - .git*
+      - .husky/**
+      - "*.md"
+  # workflow_dispatch:
+  #   inputs:
+  #     ref:
+  #       description: 'Override git ref'
+  #       type: string
+  #       default: ''
+  #       required: false
+
+jobs:
+  linting:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: ["ubuntu-latest"]
+        node_version: ["20", "22"]
+
+    runs-on: "${{ matrix.os }}"
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Install linux tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gettext make zip
+
+      - name: Set up Node.js ${{ matrix.node_version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node_version }}
+          cache: 'npm'
+
+      - name: Install Node.js project dependencies
+        run: npm ci --verbose
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      # Blocking: the static checks and unit tests (CONTRIBUTING.md § "Correctness") —
+      # ruff, Prettier, ESLint, typecheck, vitest. The `pretypecheck` npm script runs
+      # `make metadata` first: lib/prefs/settings.js imports the build-generated (and
+      # gitignored) lib/prefs/metadata.js, which does not exist in a fresh checkout.
+      - name: Run gates (make check)
+        run: make check
+
+      - name: Generate coverage report
+        run: npm run test:coverage --verbose
+
+      - name: Upload results to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Security audit
+        run: npm audit --omit=dev || true
+
+      - name: Test Packaging
+        run: make dist
+

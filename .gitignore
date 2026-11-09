@@ -1,0 +1,35 @@
+dist
+*~
+temp
+gschemas.compiled
+*.zip
+*.exe
+*.mo
+.vscode
+node_modules
+lib/prefs/metadata.js
+
+# E2E testing
+e2e-results/
+__pycache__/
+.pytest_cache/
+*.pyc
+.coverage
+htmlcov/
+coverage/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads.gate.lock
+
+# Local scratch / debugging artifacts (gitignored to prevent accidental commits)
+.scratch/
+
+# Python virtualenv (local tooling, not part of the extension)
+.venv/
+
+# Editor / toolchain local state
+.idea/
+mise.toml

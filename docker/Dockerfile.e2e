@@ -1,0 +1,144 @@
+# NexTile E2E Testing Container
+# Self-contained environment for real GNOME Shell testing.
+# Container setup derived from gnome-shell-pod (https://github.com/Schneegans/gnome-shell-pod),
+# MIT license, by Simon Schneegans.
+#
+# FEDORA_VERSION maps to GNOME version:
+#   39 -> GNOME 45, 40 -> GNOME 46, 41 -> GNOME 47,
+#   42 -> GNOME 48, 43 -> GNOME 49, 44 -> GNOME 50, 45 -> GNOME 51, rawhide -> next devel cycle
+#
+# Build extension first on host: make build
+# Then build container: docker build -f docker/Dockerfile.e2e -t nextile-e2e .
+#
+# IMPORTANT: This container must be run with systemd as PID 1:
+#   - Run in detached mode: docker run -td ...
+#   - Use docker exec to run tests: docker exec $POD set-env.sh /app/scripts/run-tests.sh
+#   - The Makefile handles this automatically with: make e2e-test
+
+ARG FEDORA_VERSION=42
+FROM registry.fedoraproject.org/fedora:${FEDORA_VERSION}
+
+LABEL maintainer="NexTile <https://github.com/fresp/nextile>"
+LABEL description="E2E testing environment for NexTile GNOME Shell extension"
+
+# Install GNOME Shell + test dependencies in a single layer.
+# gnome-shell: the shell itself plus gnome-extensions CLI.
+# dbus-daemon: explicit dep because Fedora defaults to dbus-broker which doesn't
+#   provide the dbus-daemon binary that start-user-session.sh uses.
+# xorg-x11-server-Xvfb: virtual X server (start-user-session.sh runs gnome-shell --x11 on Xvfb).
+# gtk4: the e2e test window (tests/e2e/apps/nextile_test_window.py) is a GTK4 app.
+# NexTile test deps: xdotool, ImageMagick, ibus, python3-pip.
+# Build deps for dbus-python (removed after pip install).
+RUN dnf install -y --setopt=install_weak_deps=False \
+    gnome-shell \
+    dbus-daemon \
+    xorg-x11-server-Xvfb \
+    mesa-dri-drivers \
+    sudo \
+    python3-pip \
+    ImageMagick \
+    gtk4 \
+    ibus \
+    xdotool \
+    gcc python3-devel dbus-devel glib2-devel \
+    && pip3 install --no-cache-dir pytest PyGObject Pillow dbus-python \
+    && dnf remove -y gcc python3-devel dbus-devel glib2-devel \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
+
+# Screencast recording stack (nextile-qgg). Build-arg-gated so it lands ONLY in the
+# recording lane's image (make e2e-test-record => F44/GNOME50 Wayland) — other
+# lanes stay byte-identical. pipewire+wireplumber: the session manager publishes
+# the node pipewiresrc consumes. gstreamer1 + plugins-base (videoconvert) +
+# plugins-good (vp8enc/webmmux): needed by both the shell-owned (route A) and the
+# pipewiresrc (route B) pipelines, and ships the Gst GI typelib route B imports.
+# pipewire-gstreamer provides the pipewiresrc element. We use VP8/WebM (always
+# available via gstreamer1-plugins-good) rather than H.264, which avoids relying
+# on the cisco-openh264 repo (disabled in some sandboxed builds).
+ARG ENABLE_RECORD=0
+RUN if [ "$ENABLE_RECORD" = "1" ]; then \
+        dnf install -y --setopt=install_weak_deps=False \
+            pipewire \
+            wireplumber \
+            gstreamer1 \
+            gstreamer1-plugins-base \
+            gstreamer1-plugins-good \
+            gstreamer1-plugins-base-tools \
+            pipewire-gstreamer \
+        && dnf clean all \
+        && rm -rf /var/cache/dnf ; \
+    fi
+
+# Create gnomeshell user with passwordless sudo (from gnome-shell-pod)
+RUN adduser -m -U -G users,adm gnomeshell && \
+    echo "gnomeshell     ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Configure systemd for container use (from gnome-shell-pod)
+RUN systemctl unmask systemd-logind.service && \
+    systemctl set-default multi-user.target && \
+    mkdir -p /etc/systemd/system/systemd-logind.service.d && \
+    printf '[Service]\nProtectHostname=no\n' > /etc/systemd/system/systemd-logind.service.d/override.conf
+
+# Mask the per-user systemd units for UID 1000 (gnomeshell). The session is
+# brought up entirely via `systemd-run --uid=gnomeshell` transient system-slice
+# units (see start-user-session.sh) plus a hand-made /run/user/1000 — it never
+# needs user@.service. Leaving these unmasked breaks the lane (notably Fedora 40
+# / GNOME 46, X11): every `su - gnomeshell` login session in start-user-session.sh
+# fires pam_systemd, which starts user-runtime-dir@1000.service. That service
+# mounts a tmpfs over /run/user/1000 on session-open and unmounts it on
+# session-close, destroying the running gnome-shell's bus/socket dir (dconf
+# "Permission denied", then "GNOME Shell failed to start"). user@1000.service
+# also always fails PAM (status 224) in this container regardless. Masking both
+# so the hand-made /run/user/1000 is never shadowed/torn down fixes F40 and is a
+# no-op on the versions that already pass.
+RUN systemctl mask user@1000.service user-runtime-dir@1000.service
+
+# Set up extension directory
+ARG UUID=nextile@fresp.github.io
+ENV EXTENSION_PATH=/home/gnomeshell/.local/share/gnome-shell/extensions/${UUID}
+
+# Stamp the host git SHA the image was built from so E2E results are traceable
+# to an exact commit (build-provenance hygiene, nextile-q0k). The image carries no
+# .git, so this MUST be captured at build time, not via git at test time.
+ARG GIT_SHA=unknown
+ENV NEXTILE_BUILD_SHA=${GIT_SHA}
+
+# run-tests.sh checks the running GNOME Shell against this release's entry in
+# gnome-versions.json (nextile-52hu). An ARG declared before FROM must be
+# re-declared to be visible here.
+ARG FEDORA_VERSION
+ENV NEXTILE_FEDORA_VERSION=${FEDORA_VERSION}
+
+# Copy pre-built extension (build on host first with: make build)
+COPY --chown=gnomeshell:gnomeshell temp/ ${EXTENSION_PATH}/
+
+# Copy test framework and scripts
+WORKDIR /app
+COPY --chown=gnomeshell:gnomeshell tests/e2e/ /app/tests/e2e/
+COPY --chown=gnomeshell:gnomeshell docker/scripts/ /app/scripts/
+
+RUN chmod +x /app/scripts/*.sh
+
+# Set up test results directory
+RUN mkdir -p /app/e2e-results && chown -R gnomeshell:gnomeshell /app
+
+# Enable the NexTile extension for the gnomeshell user via dconf
+# This must be done before GNOME Shell starts so it loads the extension on startup
+RUN mkdir -p /home/gnomeshell/.config/dconf && \
+    chown -R gnomeshell:gnomeshell /home/gnomeshell/.config
+
+# Pre-enable the extension by writing to dconf database directly
+# Create a keyfile and compile it to binary format
+RUN mkdir -p /tmp/dconf-db && \
+    echo -e "[org/gnome/shell]\nenabled-extensions=['nextile@fresp.github.io']" > /tmp/dconf-db/00-nextile && \
+    dconf compile /home/gnomeshell/.config/dconf/user /tmp/dconf-db && \
+    chown gnomeshell:gnomeshell /home/gnomeshell/.config/dconf/user && \
+    rm -rf /tmp/dconf-db
+
+# Install helper scripts to standard path
+RUN cp /app/scripts/start-user-session.sh /usr/local/bin/start-user-session.sh && \
+    cp /app/scripts/set-env.sh /usr/local/bin/set-env.sh && \
+    chmod +x /usr/local/bin/start-user-session.sh /usr/local/bin/set-env.sh
+
+# Systemd as PID 1 is required for GNOME Shell (systemd-logind, locale1, etc.)
+CMD [ "/usr/sbin/init", "systemd.unified_cgroup_hierarchy=0" ]

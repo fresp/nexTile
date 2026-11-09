@@ -1,0 +1,1322 @@
+# NexTile Türkçe Çevirisi
+# Mucahit Sahin <mucahitsahin786@gmail.com>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: NexTile\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: 2025-08-22 12:00+0300\n"
+"Last-Translator: Mucahit Sahin <mucahitsahin786@gmail.com>\n"
+"Language-Team: Turkish\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+
+#: lib/extension/cheatsheet.js
+msgid "Focus"
+msgstr ""
+
+#: lib/extension/cheatsheet.js lib/prefs/settings.js
+msgid "Swap"
+msgstr "Takas"
+
+#: lib/extension/cheatsheet.js
+msgid "Move"
+msgstr ""
+
+#: lib/extension/cheatsheet.js
+msgid "Resize"
+msgstr ""
+
+#: lib/extension/cheatsheet.js
+msgid "Snap"
+msgstr ""
+
+#: lib/extension/cheatsheet.js
+msgid "Window Toggle"
+msgstr ""
+
+#: lib/extension/cheatsheet.js lib/prefs/appearance.js
+msgid "Gaps"
+msgstr "Boşluklar"
+
+#: lib/extension/cheatsheet.js
+msgid "Window Reset"
+msgstr ""
+
+#: lib/extension/cheatsheet.js
+msgid "Window Size"
+msgstr ""
+
+#: lib/extension/cheatsheet.js
+msgid "Pointer"
+msgstr ""
+
+#: lib/extension/cheatsheet.js
+msgid "Split"
+msgstr ""
+
+#: lib/extension/cheatsheet.js lib/prefs/settings.js
+msgid "Stacked"
+msgstr "Yığılmış"
+
+#: lib/extension/cheatsheet.js lib/prefs/settings.js
+msgid "Tabbed"
+msgstr "Sekmeli"
+
+#: lib/extension/cheatsheet.js
+msgid "Workspace"
+msgstr ""
+
+#: lib/extension/cheatsheet.js lib/prefs/appearance.js
+msgid "Appearance"
+msgstr "Görünüm"
+
+#: lib/extension/cheatsheet.js
+msgid "Preferences"
+msgstr ""
+
+#: lib/extension/cheatsheet.js
+msgid "Other"
+msgstr ""
+
+#: lib/extension/indicator.js lib/prefs/settings.js
+msgid "Tiling"
+msgstr "Döşeme"
+
+#: lib/extension/indicator.js lib/prefs/settings.js
+msgid "NexTile"
+msgstr "NexTile"
+
+#: lib/extension/indicator.js
+msgid "Tiling Window Management"
+msgstr "Döşeme Pencere Yönetimi"
+
+#: lib/extension/indicator.js
+msgid "Gaps Hidden when Single"
+msgstr "Tek Pencerede Boşluklar Gizli"
+
+#: lib/extension/indicator.js
+msgid "Show Focus Hint Border"
+msgstr "Odak İpucu Kenarlığını Göster"
+
+#: lib/extension/indicator.js
+msgid "Move Pointer with the Focus"
+msgstr "İmleci Odakla Birlikte Taşı"
+
+#: lib/extension/indicator.js
+msgid "Settings"
+msgstr "Ayarlar"
+
+#: lib/prefs/appearance.js
+msgid "Tiled window"
+msgstr "Döşenmiş pencere"
+
+#: lib/prefs/appearance.js
+msgid "Tabbed window"
+msgstr "Sekmeli pencere"
+
+#: lib/prefs/appearance.js
+msgid "Stacked window"
+msgstr "Yığılmış pencere"
+
+#: lib/prefs/appearance.js
+msgid "Floating window"
+msgstr "Yüzen pencere"
+
+#: lib/prefs/appearance.js
+msgid "Split direction hint"
+msgstr "Bölme yönü ipucu"
+
+#: lib/prefs/appearance.js
+msgid "Change the gap size between windows"
+msgstr "Pencereler arasındaki boşluk boyutunu değiştir"
+
+#: lib/prefs/appearance.js
+msgid "Gap size"
+msgstr "Boşluk boyutu"
+
+#: lib/prefs/appearance.js
+msgid "Gap size multiplier"
+msgstr "Boşluk boyutu çarpanı"
+
+#: lib/prefs/appearance.js
+msgid "Disable gaps for single window"
+msgstr "Tek pencere için boşlukları devre dışı bırak"
+
+#: lib/prefs/appearance.js
+msgid "Disables window gaps when only a single window is present"
+msgstr "Sadece tek pencere olduğunda pencere boşluklarını devre dışı bırakır"
+
+#: lib/prefs/appearance.js
+#, fuzzy
+msgid "Maximize single window"
+msgstr "Tek pencere için boşlukları devre dışı bırak"
+
+#: lib/prefs/appearance.js
+#, fuzzy
+msgid "Automatically maximize when only one window is present"
+msgstr "Sadece tek pencere olduğunda pencere boşluklarını devre dışı bırakır"
+
+#: lib/prefs/appearance.js
+msgid "Screen Edge Margins"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Add extra space at screen edges (useful for auto-hide panels/docks)"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Top margin"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Extra space at top of screen (pixels)"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Bottom margin"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Extra space at bottom of screen (pixels)"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Left margin"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Extra space at left of screen (pixels)"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Right margin"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Extra space at right of screen (pixels)"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Style"
+msgstr "Stil"
+
+#: lib/prefs/appearance.js
+msgid "Change how the shell looks"
+msgstr "Kabuğun nasıl göründüğünü değiştir"
+
+#: lib/prefs/appearance.js
+msgid "Preview hint"
+msgstr "Önizleme ipucu"
+
+#: lib/prefs/appearance.js
+msgid "Shows where the window will be tiled when you let go of it"
+msgstr "Pencereyi bıraktığınızda nerede döşeneceğini gösterir"
+
+#: lib/prefs/appearance.js
+msgid "Border around focused window"
+msgstr "Odaklanmış pencere etrafında kenarlık"
+
+#: lib/prefs/appearance.js
+msgid "Display a colored border around the focused window"
+msgstr "Odaklanmış pencere etrafında renkli kenarlık göster"
+
+#: lib/prefs/appearance.js
+#, fuzzy
+msgid "Disable focus border when single"
+msgstr "Tek pencere için boşlukları devre dışı bırak"
+
+#: lib/prefs/appearance.js
+#, fuzzy
+msgid "Hides focus border when only a single window is present"
+msgstr "Sadece tek pencere olduğunda pencere boşluklarını devre dışı bırakır"
+
+#: lib/prefs/appearance.js
+msgid "Window split hint border"
+msgstr "Pencere bölme ipucu kenarlığı"
+
+#: lib/prefs/appearance.js
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Show split direction border on focused window"
+msgstr "Odaklanmış pencerede bölme yönü kenarlığını göster"
+
+#: lib/prefs/appearance.js
+#, fuzzy
+msgid "Border radius"
+msgstr "Kenarlık boyutu"
+
+#: lib/prefs/appearance.js
+msgid "Corner radius of the focus borders (0 for square corners)"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Tab margin"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Spacing between tabs in tabbed tiling mode (pixels)"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Tab bar height"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Height of each stacked/tabbed title bar (pixels)"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Tab bar position"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Place the stacked/tabbed title bar at the top or bottom"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Top"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Bottom"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "NexTile in quick settings"
+msgstr "Hızlı ayarlarda NexTile"
+
+#: lib/prefs/appearance.js
+msgid "Toggles the NexTile tile in quick settings"
+msgstr "Hızlı ayarlarda NexTile döşemesini açar/kapatır"
+
+#: lib/prefs/appearance.js
+msgid "Show tray icon"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Show NexTile icon in the top bar (separate from quick settings menu)"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Color"
+msgstr "Renk"
+
+#: lib/prefs/appearance.js
+msgid "Changes the focused window's border and preview hint colors"
+msgstr "Odaklanmış pencerenin kenarlık ve önizleme ipucu renklerini değiştirir"
+
+#: lib/prefs/appearance.js
+msgid "Stylesheet cannot be parsed"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid ""
+"Colors and border sizes cannot be saved until the errors in ~/.config/"
+"nextile/stylesheet/nextile/stylesheet.css are fixed. Delete that file to "
+"start again from the default stylesheet."
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Border size"
+msgstr "Kenarlık boyutu"
+
+#: lib/prefs/appearance.js
+msgid "Border color"
+msgstr "Kenarlık rengi"
+
+#: lib/prefs/floating.js
+msgid "Windows"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Window Class"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Window Title (optional)"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Add"
+msgstr ""
+
+#: lib/prefs/floating.js
+#, fuzzy
+msgid "Add Floating Window"
+msgstr "Yüzen pencere"
+
+#: lib/prefs/floating.js
+msgid ""
+"Add a rule to exclude windows from tiling. Use xprop WM_CLASS to find window "
+"class."
+msgstr ""
+
+#: lib/prefs/floating.js
+#, fuzzy
+msgid "Search windows..."
+msgstr "Yığılmış pencere"
+
+#: lib/prefs/floating.js
+#, fuzzy
+msgid "Floating Windows"
+msgstr "Yüzen pencere"
+
+#: lib/prefs/floating.js
+msgid "Windows that will not be tiled"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Title-only rule"
+msgstr ""
+
+#: lib/prefs/keyboard.js
+msgid "Keyboard"
+msgstr "Klavye"
+
+#: lib/prefs/keyboard.js
+msgid "Drag-and-drop modifier key"
+msgstr "Sürükle-bırak değiştirici tuşu"
+
+#: lib/prefs/keyboard.js
+msgid ""
+"Change the modifier key for tiling windows via drag-and-drop. Select 'None' "
+"to always tile"
+msgstr ""
+"Sürükle-bırak ile pencere döşeme için değiştirici tuşu değiştirir. Her zaman "
+"döşemek için 'Hiçbiri'ni seçin"
+
+#: lib/prefs/keyboard.js
+msgid "Modifier key"
+msgstr "Değiştirici tuş"
+
+#: lib/prefs/keyboard.js
+msgid "Super"
+msgstr "Super"
+
+#: lib/prefs/keyboard.js
+msgid "Ctrl"
+msgstr "Ctrl"
+
+#: lib/prefs/keyboard.js
+msgid "Alt"
+msgstr "Alt"
+
+#: lib/prefs/keyboard.js
+msgid "Shift"
+msgstr ""
+
+#: lib/prefs/keyboard.js
+msgid "None"
+msgstr "Hiçbiri"
+
+#: lib/prefs/keyboard.js
+msgid "Shortcuts"
+msgstr "Kısayollar"
+
+#: lib/prefs/keyboard.js
+#, fuzzy
+msgid ""
+"Change the tiling shortcuts. To clear a shortcut clear the input field. To "
+"apply a shortcut press enter. <a href=\"https://github.com/fresp/nextile/"
+"blob/main/docs/user/keybindings.md\">Keyboard shortcuts guide</a>"
+msgstr ""
+"Döşeme kısayollarını değiştir. Bir kısayolu temizlemek için giriş alanını "
+"temizleyin. Bir kısayolu uygulamak için enter tuşuna basın. <a "
+"href=\"https://github.com/fresp/nextile/wiki/Keyboard-Shortcuts\">Sözdizimi "
+"örnekleri</a>"
+
+#: lib/prefs/keyboard.js
+msgid "Bulk Actions"
+msgstr ""
+
+#: lib/prefs/keyboard.js
+msgid "Disable all shortcuts or restore default keybindings"
+msgstr ""
+
+#: lib/prefs/keyboard.js
+#, fuzzy
+msgid "Manage all shortcuts"
+msgstr "Kısayolu temizle"
+
+#: lib/prefs/keyboard.js
+msgid "Quickly disable all shortcuts or restore defaults"
+msgstr ""
+
+#: lib/prefs/keyboard.js
+msgid "Disable All"
+msgstr ""
+
+#: lib/prefs/keyboard.js
+#, fuzzy
+msgid "Restore Defaults"
+msgstr "Varsayılana sıfırla"
+
+#: lib/prefs/keyboard.js
+msgid "All shortcuts disabled"
+msgstr ""
+
+#: lib/prefs/keyboard.js
+#, fuzzy
+msgid "Shortcuts restored to defaults"
+msgstr "Varsayılana sıfırla"
+
+#: lib/prefs/keyboard.js
+msgid "Shortcut also bound to:"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Never"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Portability"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Portable Configuration"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid ""
+"Export your settings and keybindings to JSON files for backup or syncing "
+"across machines. Files are stored in ~/.config/nextile/config/"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Config directory"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Open config directory"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Open the configuration folder in your file manager"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Open"
+msgstr ""
+
+#: lib/prefs/portability.js
+#, fuzzy
+msgid "settings.json"
+msgstr "Ayarlar"
+
+#: lib/prefs/portability.js
+msgid "Checking..."
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "keybindings.json"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Last import"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Last export"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Status"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Current state of portable configuration files"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Actions"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Export or import your configuration"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Export current settings"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Save all settings and keybindings to JSON files"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Export"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Import from files"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Load settings and keybindings from existing JSON files"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Import"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Auto-sync changes"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Automatically update config files when settings change in Preferences"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "How it works"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid ""
+"1. Click 'Export' to create settings.json and keybindings.json files\n"
+"2. Copy ~/.config/nextile/config/ to your dotfiles or cloud storage\n"
+"3. On a new machine, place the files and restart NexTile to auto-import\n"
+"4. Use Super+Shift+R to manually reload configuration at any time"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Not created"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Present"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Failed to open config directory"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Export failed"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Configuration exported successfully"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "No config files found to import"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Configuration imported successfully"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Import failed"
+msgstr ""
+
+#: lib/prefs/portability.js
+msgid "Configuration partially imported"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "translator-credits"
+msgstr "Çevirmen kredileri"
+
+#: lib/prefs/settings.js
+msgid "Documentation"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "About"
+msgstr "Hakkında"
+
+#: lib/prefs/settings.js
+msgid "Behavior"
+msgstr "Davranış"
+
+#: lib/prefs/settings.js
+msgid "Change how the tiling behaves"
+msgstr "Döşemenin nasıl davrandığını değiştir"
+
+#: lib/prefs/settings.js
+msgid "Focus on Hover"
+msgstr "Üzerine Gelince Odaklan"
+
+#: lib/prefs/settings.js
+msgid "Window focus follows the pointer"
+msgstr "Pencere odağı imleci takip eder"
+
+#: lib/prefs/settings.js
+msgid "Move pointer with focused window"
+msgstr "İmleci odaklanmış pencereyle taşı"
+
+#: lib/prefs/settings.js
+msgid "Moves the pointer when focusing or swapping via keyboard"
+msgstr "Klavye ile odaklanma veya takas yaparken imleci taşır"
+
+#: lib/prefs/settings.js
+msgid "Quarter tiling"
+msgstr "Çeyrek döşeme"
+
+#: lib/prefs/settings.js
+msgid "Places new windows in a clock-wise fashion"
+msgstr "Yeni pencereleri saat yönünde yerleştirir"
+
+#: lib/prefs/settings.js
+msgid "Disable GNOME edge-tiling"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "Inhibit GNOME's built-in half/edge tiling while NexTile is enabled"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "Stacked tiling"
+msgstr "Yığılmış döşeme"
+
+#: lib/prefs/settings.js
+msgid "Stacks windows on top of each other while still tiling them"
+msgstr "Pencereleri döşerken birbirinin üzerine yığar"
+
+#: lib/prefs/settings.js
+msgid "Tabbed tiling"
+msgstr "Sekmeli döşeme"
+
+#: lib/prefs/settings.js
+msgid "Groups windows as tabs"
+msgstr "Pencereleri sekme olarak gruplar"
+
+#: lib/prefs/settings.js
+msgid "Auto exit tabbed tiling"
+msgstr "Sekmeli döşemeden otomatik çık"
+
+#: lib/prefs/settings.js schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Exit tabbed tiling mode when only a single tab remains"
+msgstr "Sadece tek sekme kaldığında sekmeli döşeme modundan çık"
+
+#: lib/prefs/settings.js
+msgid "Auto re-orient on close"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid ""
+"Flip a split container's orientation to match its shape when a window closes"
+msgstr ""
+
+#: lib/prefs/settings.js
+#, fuzzy
+msgid "Default layout for new windows"
+msgstr "Tek pencere için boşlukları devre dışı bırak"
+
+#: lib/prefs/settings.js
+msgid "Layout used when creating new containers"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "Tiled (default)"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "New window placement"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "Which monitor a new window initially homes to"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "Pointer / active monitor"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "Window's own monitor"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "Launch windows into a new workspace"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid ""
+"Each newly launched window moves to a fresh workspace and is tiled there, "
+"leaving the current workspace untouched"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "Follow launched windows"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "Switch to the new workspace after a window is launched into it"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "Launch grouping window"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid ""
+"Milliseconds within which windows from the same application share one new "
+"workspace (0 disables grouping)"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "Drag-and-drop behavior"
+msgstr "Sürükle-bırak davranışı"
+
+#: lib/prefs/settings.js
+msgid "What to do when dragging one window on top of another"
+msgstr "Bir pencereyi diğerinin üzerine sürüklerken ne yapılacağı"
+
+#: lib/prefs/settings.js
+msgid "Always on Top mode for floating windows"
+msgstr "Yüzen pencereler için Her Zaman Üstte modu"
+
+#: lib/prefs/settings.js
+msgid "Makes floating windows appear above tiled windows"
+msgstr "Yüzen pencerelerin döşenmiş pencerelerin üzerinde görünmesini sağlar"
+
+#: lib/prefs/settings.js
+msgid "Non-tiling workspaces"
+msgstr "Döşeme yapılmayan çalışma alanları"
+
+#: lib/prefs/settings.js
+msgid ""
+"Disables tiling on specified workspaces. Starts from 0, separated by commas"
+msgstr ""
+"Belirtilen çalışma alanlarında döşemeyi devre dışı bırakır. 0'dan başlar, "
+"virgülle ayrılır"
+
+#: lib/prefs/settings.js
+msgid "Example: 0,1,2"
+msgstr "Örnek: 0,1,2"
+
+#: lib/prefs/settings.js
+#, fuzzy
+msgid "Non-tiling monitors"
+msgstr "Döşeme yapılmayan çalışma alanları"
+
+#: lib/prefs/settings.js
+#, fuzzy
+msgid ""
+"Disables tiling on specified monitors. Starts from 0, separated by commas"
+msgstr ""
+"Belirtilen çalışma alanlarında döşemeyi devre dışı bırakır. 0'dan başlar, "
+"virgülle ayrılır"
+
+#: lib/prefs/settings.js
+#, fuzzy
+msgid "Example: 0,1"
+msgstr "Örnek: 0,1,2"
+
+#: lib/prefs/settings.js
+msgid "Application Launcher"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "Command to launch (shortcut configurable in Keyboard tab)"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "Command (e.g., gnome-terminal)"
+msgstr ""
+
+#: lib/prefs/settings.js
+msgid "Logger"
+msgstr "Günlükçü"
+
+#: lib/prefs/settings.js
+msgid "Log level"
+msgstr "Günlük seviyesi"
+
+#: lib/prefs/widgets.js
+msgid ""
+"<b>CAUTION</b>: Enabling this setting can lead to bugs or cause the shell to "
+"crash"
+msgstr ""
+"<b>DİKKAT</b>: Bu ayarı etkinleştirmek hatalara yol açabilir veya kabuğun "
+"çökmesine neden olabilir"
+
+#: lib/prefs/widgets.js
+msgid "Clear shortcut"
+msgstr "Kısayolu temizle"
+
+#: lib/prefs/widgets.js
+msgid "Reset to default"
+msgstr "Varsayılana sıfırla"
+
+#: lib/prefs/widgets.js
+msgid "Remove Item"
+msgstr ""
+
+#: lib/prefs/widgets.js
+msgid "Saved"
+msgstr ""
+
+#: lib/prefs/widgets.js
+msgid "Invalid input"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Show window border on focused window"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "The size of the gap between windows in the workarea"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "The window resize increment/decrement in pixels"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "The size increment of the gaps. size-increment * gap-size"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Extra margin at top of screen (for auto-hide panels)"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Extra margin at bottom of screen (for auto-hide docks)"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Extra margin at left of screen"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Extra margin at right of screen"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Hide gap when single window toggle"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Hide focus border when single window toggle"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Maximize window when it is the only one on workspace"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Default layout for new containers: tiled, tabbed, stacked"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Tiling mode on/off"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "NexTile quick settings toggle"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Show tray icon in top bar"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Skips tiling on the provided workspace indices"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Skips tiling on the provided monitor indices"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Stacked tiling mode on/off"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Tabbed tiling mode on/off"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"Provide log4j-like logging levels: 0 - OFF 1 - FATAL 2 - ERROR 3 - WARN 4 - "
+"INFO 5 - DEBUG 6 - TRACE 7 - ALL"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Enable logging"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Timestamp when css is last updated. Also triggers reload of St"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"Internal: original values of the GNOME settings NexTile overrides, restored "
+"on disable"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"The default center layout when dragging/dropping a window. The values are "
+"`tabbed` and `stacked`."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Move the pointer when focusing or swapping via kbd"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Focus switches to the window under the pointer."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Floating windows toggle always-on-top"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"Re-orient a split container by its aspect ratio when a child window closes"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"When enabled, closing a window in a split container flips its orientation "
+"(horizontal/vertical) to match the container's current shape. This overrides "
+"a manually chosen split-vertical/split-horizontal orientation, so it is off "
+"by default."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Enable auto split or quarter-tiling based based on smaller side"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Disable GNOME's built-in edge/half-tiling while NexTile is enabled"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"Initial monitor for a new window: 'pointer' (active/pointer monitor) or "
+"'window-actual' (the window's own monitor)"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Move each newly launched window into a fresh workspace"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"When an application opens a new window, create a new workspace, move the "
+"window there, and tile it. The workspace the window was launched from keeps "
+"its current layout and windows. Dialogs, transient windows, floating "
+"windows, and windows matching a float rule are not moved."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Switch to the new workspace after moving a launched window into it"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"When enabled, the new workspace is activated after the window is moved into "
+"it, so the launched window is immediately visible."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"Milliseconds within which windows from the same application share one new "
+"workspace"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"An application that opens several windows in quick succession (for example a "
+"session restore) gets one new workspace shared by all of those windows "
+"instead of one workspace per window. Set to 0 to disable grouping."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Whether to show preview hint DND"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Whether to show the tab decoration or not"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Timestamp to trigger window overrides reload"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "The border radius of focus borders in pixels"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "The margin between tabs in tabbed mode (pixels)"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"Height of each stacked/tabbed title bar (pixels). Minimum 1; 0 would collide "
+"with the hidden-decoration path."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"Position of the stacked/tabbed title bar within its container (top or "
+"bottom)."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Automatically unmaximize windows when a new window is tiled alongside"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Only enable hover-to-focus when tiling mode is active"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Application to launch with hotkey"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Timestamp of last config file import (Unix epoch in seconds)"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Timestamp of last config file export (Unix epoch in seconds)"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"On-disk mtime of each portable config file when NexTile last wrote or read "
+"it (JSON, internal)"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Whether to automatically sync changes to config files"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Toggle focus border"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Increase gap size"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Decrease gap size"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Toggle split direction"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Split horizontal"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Split vertical"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Toggle stacked layout"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Toggle tabbed layout"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Toggle tab decoration"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Swap window left"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Swap window down"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Swap window up"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Swap window right"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Move window left"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Move window down"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Move window up"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Move window right"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Focus window left"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Focus window down"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Focus window up"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Focus window right"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Toggle float"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Toggle always float"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Toggle workspace tiling"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Open preferences"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Toggle tiling mode"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"Mod mask to allow window tiling via drag-drop. None means it will tile "
+"immediately. Options are Super, Ctrl, Shift, Alt, and None"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Swap with last active"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Focus next window (cyclic)"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Focus previous window (cyclic)"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Swap next window (cyclic)"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Swap previous window (cyclic)"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Snap 1/3 right"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Snap 2/3 right"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Snap 1/3 left"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Snap 2/3 left"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Snap center"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Grow left edge"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Shrink left edge"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Grow bottom edge"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Shrink bottom edge"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Grow top edge"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Shrink top edge"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Grow right edge"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Shrink right edge"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Reset window sizes"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Golden ratio resize"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Reload configuration"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Move pointer to focus"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Toggle monocle mode"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Expand window"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Shrink window"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Launch application"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Toggle this cheatsheet"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Lock screen"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Export configuration"
+msgstr ""

@@ -1,0 +1,525 @@
+UUID = nextile@fresp.github.io
+INSTALL_PATH = $(HOME)/.local/share/gnome-shell/extensions/$(UUID)
+MSGSRC = $(wildcard po/*.po)
+
+# Version stamped into the built metadata.json's version-name. CI sets this to the
+# exact tag (github.ref_name); locally it defaults to `git describe` (tag, or
+# v2026.11.0-beta.1-3-gabc123 between tags, plus -dirty for uncommitted changes).
+NEXTILE_VERSION_NAME ?= $(shell git describe --tags --always --dirty 2>/dev/null)
+
+# Shell configuration - explicitly use bash for portability across distros
+SHELL := /bin/bash
+.SHELLFLAGS := -eo pipefail -c
+
+# nextile-iupo: `build` lists `clean` and the generators (metadata, schemas) that
+# clean deletes as plain prerequisites. Under `make -j`, prerequisite listing
+# order is NOT honored, so clean can race and delete a just-generated
+# lib/prefs/metadata.js or schemas/gschemas.compiled — shipping a zip that fails
+# to open prefs / never enables. Every build here is already from-clean (no
+# incremental path), so serializing prerequisites globally costs nothing and
+# removes the race deterministically. (dist also asserts the zip manifest below.)
+.NOTPARALLEL:
+
+# Tool detection (using bash-specific &> redirect)
+HAS_XGETTEXT := $(shell command -v xgettext &>/dev/null && echo yes || echo no)
+HAS_MSGFMT := $(shell command -v msgfmt &>/dev/null && echo yes || echo no)
+
+.PHONY: all clean install schemas uninstall enable disable log debug check-deps \
+	dev prod build metadata compilemsgs update-pot update-po dist purge restart test test-x test-open \
+	format lint check unit-test unit-test-watch unit-test-coverage \
+	docker-test-build unit-test-docker unit-test-docker-watch unit-test-docker-coverage \
+	e2e-test e2e-test-fast e2e-fuzz e2e-test-all e2e-test-multimonitor e2e-test-record e2e-debug e2e-clean e2e-build e2e-versions \
+	horizontal-line journal help
+
+all: build
+
+dev: build debug install
+
+prod: build install enable restart log
+
+schemas: schemas/gschemas.compiled
+	touch $@
+
+schemas/gschemas.compiled: schemas/*.gschema.xml
+	glib-compile-schemas schemas
+
+# nextile-fw33: author identities are untrusted text, so serialise them with
+# json.dumps (valid JS) rather than splicing them into JS source. HEAD, not
+# --all, so a fetched-but-unmerged PR branch can't put its authors in a build.
+metadata:
+	@echo "Generating developer metadata..."
+	@# Check before the redirect below truncates lib/prefs/metadata.js.
+	@command -v python3 &>/dev/null || (echo "ERROR: python3 not found (needed to generate lib/prefs/metadata.js)" && exit 1)
+	@git shortlog -sne HEAD | python3 -c 'import json, re, sys; \
+		seen = {}; \
+		matches = (re.fullmatch(r"\s*\d+\t(.*) <(.*)>", line.rstrip("\n")) for line in sys.stdin); \
+		[seen.setdefault(m[2], f"{m[1]} <{m[2]}>") for m in matches \
+			if m and not re.search("dependabot|noreply", m[0])]; \
+		print("export const developers = [\n" + "".join(f"  {json.dumps(d)},\n" for d in seen.values()) + "];")' \
+		> lib/prefs/metadata.js
+
+build: clean metadata.json schemas compilemsgs
+	rm -rf temp
+	mkdir -p temp
+	cp metadata.json temp
+	@# Stamp a git-derived version-name into the built metadata.json so the About
+	@# dialog and GNOME Extensions app show it (e.g. v2026.11.0, or v2026.11.0-beta.1-3-gabc123
+	@# between tags). CI overrides NEXTILE_VERSION_NAME with the exact tag; local builds
+	@# fall back to `git describe`. Only temp/ is touched — committed metadata.json
+	@# stays clean. See .github/workflows/publish.yml.
+	if [ -n "$(NEXTILE_VERSION_NAME)" ]; then \
+		python3 -c "import json,sys; p='temp/metadata.json'; d=json.load(open(p)); d['version-name']=sys.argv[1]; json.dump(d,open(p,'w'),indent=2)" "$(NEXTILE_VERSION_NAME)"; \
+	fi
+	cp -r resources temp
+	cp -r schemas temp
+	cp -r config temp
+	cp -r lib temp
+	cp extension.js prefs.js temp
+	cp *.css temp
+	cp LICENSE temp
+	mkdir -p temp/locale
+	for msg in $(MSGSRC:.po=.mo); do \
+		if [ -f $$msg ]; then \
+			msgf=temp/locale/`basename $$msg .mo`; \
+			mkdir -p $$msgf; \
+			mkdir -p $$msgf/LC_MESSAGES; \
+			cp $$msg $$msgf/LC_MESSAGES/nextile.mo; \
+		fi; \
+	done;
+
+./po/%.mo: ./po/%.po
+	msgfmt -c $< -o $@
+
+debug:
+	sed -i 's/export const production = true/export const production = false/' temp/lib/shared/settings.js
+	#sed -i 's|1.*-alpha|4999|' temp/metadata.json
+
+# Regenerate the translation template (po/nextile.pot) from source. Run this
+# manually after adding/changing _("...") strings or gschema <summary>/<description>
+# text, then commit the .pot. xgettext extracts the gschema XML via its built-in
+# GSettings rules, so schema summaries (the cheatsheet's description source) are
+# translatable through the same catalog.
+# NOTE: this is intentionally NOT part of `build` — builds only compile catalogs
+# (see compilemsgs), so a normal build never rewrites tracked po/ files.
+# Phony (always regenerates): an mtime-gated file target would silently skip
+# when nextile.pot happens to be newer than sources (e.g. after a checkout/pull),
+# which would defeat the on-demand workflow.
+# --add-location=file drops line numbers (kills source-shift churn) and
+# --sort-by-file + a sorted file list make output deterministic across machines.
+# The POT-Creation-Date line is stripped so re-running with no string changes is
+# byte-identical (the timestamp would otherwise churn on every run).
+ifeq ($(HAS_XGETTEXT),yes)
+update-pot:
+	mkdir -p po
+	xgettext --from-code=UTF-8 --add-location=file --sort-by-file \
+	  --package-name "NexTile" --output=po/nextile.pot \
+	  $$(find lib -name '*.js' | sort) ./prefs.js ./extension.js \
+	  schemas/org.gnome.shell.extensions.nextile.gschema.xml
+	sed -i '/^"POT-Creation-Date:/d' po/nextile.pot
+else
+update-pot:
+	@echo "WARNING: xgettext not found, skipping pot file generation"
+	@echo "Install gettext package for translation support"
+	@mkdir -p po
+	@touch ./po/nextile.pot
+endif
+
+# Merge the regenerated template into each .po (local/on-demand; Weblate's
+# msgmerge add-on does this in steady state). Strip POT-Creation-Date for
+# determinism, matching update-pot.
+ifeq ($(HAS_XGETTEXT),yes)
+update-po: update-pot
+	for msg in $(MSGSRC); do \
+		msgmerge -U --add-location=file $$msg ./po/nextile.pot; \
+		sed -i '/^"POT-Creation-Date:/d' $$msg; \
+	done;
+else
+update-po:
+	@echo "WARNING: gettext tools not found, skipping translation update"
+	@echo "Install gettext package for translation support"
+endif
+
+# Conditional compilation of messages based on msgfmt availability.
+# Compile-only: turns committed .po files into .mo. Never mutates .po/.pot.
+ifeq ($(HAS_MSGFMT),yes)
+compilemsgs: $(MSGSRC:.po=.mo)
+else
+compilemsgs:
+	@echo "WARNING: msgfmt not found, skipping translation compilation"
+	@echo "Install gettext package for translation support"
+endif
+
+clean:
+	rm -f "$(UUID).zip"
+	rm -rf temp schemas/gschemas.compiled
+
+check-deps:
+	@echo "Checking build dependencies..."
+	@command -v glib-compile-schemas &>/dev/null || (echo "ERROR: glib-compile-schemas not found. Install glib2-devel or libglib2.0-dev" && exit 1)
+	@command -v git &>/dev/null || (echo "ERROR: git not found" && exit 1)
+	@# `build` stamps version-name into temp/metadata.json with python3, and
+	@# .SHELLFLAGS carries -e, so its absence aborts the build with a bare 127.
+	@command -v python3 &>/dev/null || (echo "ERROR: python3 not found (needed to stamp metadata.json)" && exit 1)
+	@command -v zip &>/dev/null || echo "WARNING: zip not found, 'make dist' will fail"
+	@command -v xgettext &>/dev/null || echo "WARNING: xgettext not found, translations will be skipped"
+	@command -v msgfmt &>/dev/null || echo "WARNING: msgfmt not found, translations will be skipped"
+	@echo "All required dependencies found!"
+
+enable:
+	@if gnome-extensions list | grep -q "^$(UUID)$$"; then \
+		gnome-extensions enable "$(UUID)" && echo "Extension enabled successfully"; \
+	else \
+		echo "WARNING: Extension not detected by GNOME Shell yet"; \
+		echo "On Wayland: Log out and log back in, then run 'make enable'"; \
+		echo "On X11: Press Alt+F2, type 'r', press Enter, then run 'make enable'"; \
+	fi
+
+disable:
+	gnome-extensions disable "$(UUID)" || echo "Nothing to disable"
+
+install:
+	mkdir -p $(INSTALL_PATH)
+	cp -r temp/* $(INSTALL_PATH)
+
+uninstall:
+	rm -rf $(INSTALL_PATH)
+
+purge:
+	rm -rf .config/nextile
+
+# When releasing
+dist: build
+	cd temp && \
+	zip -qr "../${UUID}.zip" .
+	@# nextile-iupo: defense-in-depth — fail loudly if the zip is missing a file
+	@# whose absence silently breaks the extension (prefs won't open / never
+	@# enables), catching any future prerequisite-ordering regression.
+	@unzip -l "$(UUID).zip" | grep 'lib/prefs/metadata.js' >/dev/null || { echo "dist: FATAL — zip is missing lib/prefs/metadata.js"; exit 1; }
+	@unzip -l "$(UUID).zip" | grep 'schemas/gschemas.compiled' >/dev/null || { echo "dist: FATAL — zip is missing schemas/gschemas.compiled"; exit 1; }
+
+restart:
+	if bash -c 'xprop -root &> /dev/null'; then \
+		killall -HUP gnome-shell; \
+	else \
+		gnome-session-quit --logout; \
+	fi
+
+horizontal-line:
+	@printf '%.s─' $$(seq 1 $$(tput cols)) && echo || true # Prints a line of dashes #
+
+log: GNOME_SHELL_CMD=$(shell command -v gnome-shell)
+log: horizontal-line
+	@echo 'HINT: type [Ctrl]+[C] to return to the prompt.'
+	journalctl --user --follow --output=short-iso --lines=10 --since='10 seconds ago' --grep 'warning|g_variant' "$(GNOME_SHELL_CMD)"
+
+journal:
+	journalctl -b 0 -r --since "1 hour ago"
+
+test-nested: horizontal-line
+	env GNOME_SHELL_SLOWDOWN_FACTOR=2 \
+		MUTTER_DEBUG_DUMMY_MODE_SPECS=1500x1000 \
+		MUTTER_DEBUG_DUMMY_MONITOR_SCALES=1 \
+		GDK_BACKEND=wayland \
+		WAYLAND_DISPLAY=wayland-nextile \
+		dbus-run-session -- gnome-shell --nested --wayland --wayland-display=wayland-nextile
+
+# Usage:
+#   make test-open &
+#   make test-open CMD=gnome-text-editor
+#   make test-open CMD=gnome-terminal ARGS='--app-id app.x'
+#   make test-open CMD=gnome-gnome-www-browser
+#   make test-open CMD=firefox ARGS='--safe-mode' ENVVARS='MOZ_DBUS_REMOTE=1 MOZ_ENABLE_WAYLAND=1'
+#
+test-open: CMD=gnome-text-editor
+test-open:
+	GDK_BACKEND=wayland WAYLAND_DISPLAY=wayland-nextile $(ENVVARS) $(CMD) $(ARGS)&
+
+# When developing locally
+test: disable uninstall clean build debug install enable test-nested
+
+# X-Window testing need gnome-shell restart
+test-x: disable uninstall purge build debug install enable restart log
+
+format:
+	npm run format
+
+lint:
+	npm run lint
+
+# The static checks and unit tests a change must pass (CONTRIBUTING.md § "Correctness"),
+# on the whole tree. ruff runs first so a missing ruff fails fast.
+check:
+	ruff check tests/e2e
+	ruff format --check tests/e2e
+	npm run lint
+	npm run lint:src
+	npm run lint:e2e
+	npm run typecheck
+	npm test
+
+# Unit tests (local with mocked GNOME APIs)
+unit-test:
+	npm test
+
+unit-test-watch:
+	npm run test:watch
+
+unit-test-coverage:
+	npm run test:coverage
+
+# Docker-based testing (for CI or consistent environments)
+docker-test-build:
+	docker build -f Dockerfile.test -t nextile-test .
+
+unit-test-docker: docker-test-build
+	docker run --rm nextile-test npm test
+
+unit-test-docker-watch: docker-test-build
+	docker run --rm -it -v $(PWD):/app nextile-test npm run test:watch
+
+unit-test-docker-coverage: docker-test-build
+	docker run --rm -v $(PWD)/coverage:/app/coverage nextile-test npm run test:coverage
+
+# E2E Testing (real GNOME Shell in containers)
+# Uses Fedora base images; Fedora version determines GNOME version:
+# Fedora 39 = GNOME 45, 40 = GNOME 46, 41 = GNOME 47,
+# 42 = GNOME 48, 43 = GNOME 49, 44 = GNOME 50, 45 = GNOME 51, rawhide = next devel cycle
+SUPPORTED_FEDORA_VERSIONS := 39 40 41 42 43 44 45
+
+# Map GNOME versions to Fedora versions for user convenience
+# Usage: make e2e-test GNOME_VERSION=49  or  make e2e-test FEDORA_VERSION=43
+ifdef GNOME_VERSION
+  ifeq ($(GNOME_VERSION),45)
+    FEDORA_VERSION := 39
+  else ifeq ($(GNOME_VERSION),46)
+    FEDORA_VERSION := 40
+  else ifeq ($(GNOME_VERSION),47)
+    FEDORA_VERSION := 41
+  else ifeq ($(GNOME_VERSION),48)
+    FEDORA_VERSION := 42
+  else ifeq ($(GNOME_VERSION),49)
+    FEDORA_VERSION := 43
+  else ifeq ($(GNOME_VERSION),50)
+    FEDORA_VERSION := 44
+  else ifeq ($(GNOME_VERSION),51)
+    FEDORA_VERSION := 45
+  else
+    $(error Unknown GNOME_VERSION=$(GNOME_VERSION). Supported: 45, 46, 47, 48, 49, 50, 51)
+  endif
+endif
+
+# Default Fedora version for E2E tests (Fedora 42 = GNOME 48)
+# Fedora 43+ compiles gnome-shell without X11 support, so those lanes run headless
+# Wayland; 42 keeps the default lane on X11. F43/F44 are still full CI lanes.
+FEDORA_VERSION ?= 42
+E2E_IMAGE = nextile-e2e-fedora$(FEDORA_VERSION)
+E2E_RESULTS_DIR = e2e-results
+DISPLAY_NUM ?= 99
+
+# Docker capabilities for E2E containers
+# --privileged is required for systemd to mount its filesystems
+# --cgroupns=host and cgroup mount are needed for systemd cgroup support
+# Container MUST run with systemd as PID 1 (detached mode)
+E2E_DOCKER_OPTS = --privileged \
+	--cgroupns=host \
+	-v /sys/fs/cgroup:/sys/fs/cgroup:rw \
+	-e container=docker
+
+# Build E2E test container (builds extension first, then Docker image)
+# RECORD=1 opts into the screencast recording stack (nextile-qgg): installs
+# pipewire/gstreamer in the image (build-arg gated, so RECORD-less builds are
+# byte-identical) and passes NEXTILE_E2E_RECORD=1 into BOTH docker exec calls below.
+RECORD_ENV = $(if $(RECORD),-e NEXTILE_E2E_RECORD=1,)
+
+# Optional pytest marker expression threaded into run-tests.sh (mirrors RECORD_ENV).
+# `make e2e-test PYTEST_MARKER=workflow` runs only the matching lane; empty = full suite.
+# Single-word markers only at this layer (it expands unquoted into the docker exec
+# line); for a multi-word expression like "not workflow" use pytest directly inside
+# the container (`pytest -m "not workflow"`), as documented in tests/e2e/README.md.
+MARKER_ENV = $(if $(PYTEST_MARKER),-e PYTEST_MARKER=$(PYTEST_MARKER),)
+
+# Live-fuzzer knobs (nextile-cnrc), forwarded into the test-running docker exec only
+# when set, so non-fuzz lanes are byte-identical. See `make e2e-fuzz` and
+# tests/e2e/README.md ("Fuzzing").
+FUZZ_ENV = \
+	$(if $(FORGE_FUZZ_SEED),-e FORGE_FUZZ_SEED=$(FORGE_FUZZ_SEED),) \
+	$(if $(FORGE_FUZZ_SESSIONS),-e FORGE_FUZZ_SESSIONS=$(FORGE_FUZZ_SESSIONS),) \
+	$(if $(FORGE_FUZZ_STEPS),-e FORGE_FUZZ_STEPS=$(FORGE_FUZZ_STEPS),) \
+	$(if $(FORGE_FUZZ_WINDOWS),-e FORGE_FUZZ_WINDOWS=$(FORGE_FUZZ_WINDOWS),) \
+	$(if $(FORGE_FUZZ_SHRINK),-e FORGE_FUZZ_SHRINK=$(FORGE_FUZZ_SHRINK),) \
+	$(if $(FORGE_FUZZ_SHRINK_K),-e FORGE_FUZZ_SHRINK_K=$(FORGE_FUZZ_SHRINK_K),) \
+	$(if $(FORGE_FUZZ_CONTINUE),-e FORGE_FUZZ_CONTINUE=$(FORGE_FUZZ_CONTINUE),) \
+	$(if $(FORGE_FUZZ_AUTOSPLIT),-e FORGE_FUZZ_AUTOSPLIT=$(FORGE_FUZZ_AUTOSPLIT),) \
+	$(if $(FORGE_FUZZ_REPLAY),-e FORGE_FUZZ_REPLAY=$(FORGE_FUZZ_REPLAY),)
+
+e2e-build: build
+	docker build -f docker/Dockerfile.e2e -t $(E2E_IMAGE) \
+		--build-arg FEDORA_VERSION=$(FEDORA_VERSION) \
+		--build-arg ENABLE_RECORD=$(if $(RECORD),1,0) \
+		--build-arg GIT_SHA=$$(git rev-parse HEAD 2>/dev/null || echo unknown) .
+
+# Run E2E tests for a specific GNOME/Fedora version
+# Usage: make e2e-test GNOME_VERSION=47  (or FEDORA_VERSION=41)
+#
+# This target runs the container in DETACHED mode with systemd as PID 1,
+# then uses docker exec to run tests. This is required because:
+# 1. GNOME Shell 45+ needs systemd-localed (org.freedesktop.locale1 D-Bus service)
+# 2. The container uses systemd to manage core services
+e2e-test: e2e-build
+	@mkdir -p $(E2E_RESULTS_DIR)
+	@echo "Starting E2E container in detached mode..."
+	@POD=$$(docker run --rm -td $(E2E_DOCKER_OPTS) \
+		-v $(PWD)/$(E2E_RESULTS_DIR):/app/e2e-results \
+		$(E2E_IMAGE)) && \
+	trap "echo 'Stopping container...'; docker stop $$POD 2>/dev/null || true" EXIT && \
+	echo "Container: $$POD" && \
+	echo "Waiting for container to initialize..." && \
+	sleep 3 && \
+	echo "Starting GNOME Shell session..." && \
+	docker exec $(if $(MULTIMONITOR),-e NEXTILE_E2E_VIRTUAL_MONITORS=2,) $(RECORD_ENV) $$POD /usr/local/bin/start-user-session.sh $(DISPLAY_NUM) && \
+	docker exec $$POD chown -R gnomeshell:gnomeshell /app/e2e-results && \
+	echo "Running E2E tests..." && \
+	docker exec --user gnomeshell -e DISPLAY=:$(DISPLAY_NUM) $(RECORD_ENV) $(MARKER_ENV) $(FUZZ_ENV) $$POD set-env.sh /app/scripts/run-tests.sh
+
+# Run only the multi-step workflow lane (nextile-911) — the fast inner-loop pass.
+# The full suite still runs both lanes (workflows ordered first); this is for local
+# iteration. GNOME_VERSION is forwardable, e.g. make e2e-test-fast GNOME_VERSION=48.
+e2e-test-fast:
+	@$(MAKE) e2e-test PYTEST_MARKER=workflow
+
+# Run the live fuzzer lane (nextile-cnrc): seeded random action sequences against a real
+# headless GNOME Shell, checking tree invariants + geometry + the shell log after every
+# step. Opt-in (excluded from the default suite). Tune via FORGE_FUZZ_* (see
+# tests/e2e/README.md), e.g.:
+#   make e2e-fuzz FORGE_FUZZ_SESSIONS=2 FORGE_FUZZ_STEPS=40
+#   make e2e-fuzz FORGE_FUZZ_SEED=12345            # reproduce a specific session
+#   make e2e-fuzz FORGE_FUZZ_REPLAY=/app/e2e-results/fuzz/repro-5.min.json
+e2e-fuzz:
+	@$(MAKE) e2e-test PYTEST_MARKER=fuzz
+
+# Run E2E tests with two virtual monitors (nextile-a34.1, headless Wayland only).
+# Boots the session with a second 1920x1080 output so test_multi_monitor runs;
+# every other test is unaffected by the extra monitor.
+e2e-test-multimonitor:
+	@$(MAKE) e2e-test MULTIMONITOR=1
+
+# Run E2E tests with screencast recording (nextile-qgg). Wayland-only, so this
+# forces the latest GNOME lane (F44/GNOME50; the default F42 lane is X11).
+# Produces e2e-results/recording.webm. Recursive sub-make so GNOME_VERSION=50 ->
+# FEDORA_VERSION:=44 -> E2E_IMAGE all resolve, and RECORD=1 reaches e2e-build
+# (build-arg) plus both docker exec calls.
+e2e-test-record:
+	@$(MAKE) e2e-test GNOME_VERSION=50 RECORD=1
+
+# Run E2E tests for all supported versions
+e2e-test-all:
+	@failed=""; \
+	for version in $(SUPPORTED_FEDORA_VERSIONS); do \
+		echo "========================================"; \
+		echo "Running E2E tests for Fedora $$version..."; \
+		echo "========================================"; \
+		$(MAKE) e2e-test FEDORA_VERSION=$$version || failed="$$failed $$version"; \
+	done; \
+	if [ -n "$$failed" ]; then echo "E2E tests failed for Fedora:$$failed"; exit 1; fi
+
+# Interactive debugging in E2E container
+# Starts container with GNOME Shell, then drops into bash
+e2e-debug: e2e-build
+	@mkdir -p $(E2E_RESULTS_DIR)
+	@echo "Starting E2E container for debugging..."
+	@POD=$$(docker run --rm -td $(E2E_DOCKER_OPTS) \
+		-v $(PWD)/tests/e2e:/app/tests/e2e \
+		-v $(PWD)/$(E2E_RESULTS_DIR):/app/e2e-results \
+		$(E2E_IMAGE)) && \
+	trap "echo 'Stopping container...'; docker stop $$POD 2>/dev/null || true" EXIT && \
+	echo "Container: $$POD" && \
+	echo "Waiting for container to initialize..." && \
+	sleep 3 && \
+	echo "Starting GNOME Shell session..." && \
+	docker exec $$POD /usr/local/bin/start-user-session.sh $(DISPLAY_NUM) && \
+	docker exec $$POD chown -R gnomeshell:gnomeshell /app/e2e-results && \
+	echo "" && \
+	echo "========================================" && \
+	echo "Debug shell ready. GNOME Shell is running." && \
+	echo "Run tests with: python3 -m pytest tests/ -v" && \
+	echo "========================================" && \
+	docker exec -it --user gnomeshell -e DISPLAY=:$(DISPLAY_NUM) \
+		-w /app/tests/e2e $$POD set-env.sh /bin/bash
+
+# Clean E2E artifacts
+e2e-clean:
+	rm -rf $(E2E_RESULTS_DIR)
+	@for version in $(SUPPORTED_FEDORA_VERSIONS); do \
+		docker rmi nextile-e2e-fedora$$version 2>/dev/null || true; \
+	done
+
+# List supported versions
+e2e-versions:
+	@echo "Supported GNOME versions:"
+	@echo "  GNOME 45 (Fedora 39)"
+	@echo "  GNOME 46 (Fedora 40)"
+	@echo "  GNOME 47 (Fedora 41)"
+	@echo "  GNOME 48 (Fedora 42) - default"
+	@echo "  GNOME 49 (Fedora 43)"
+	@echo "  GNOME 50 (Fedora 44)"
+	@echo "  GNOME 51 (Fedora 45)"
+	@echo ""
+	@echo "Usage:"
+	@echo "  make e2e-test                    # Run with default (GNOME 48)"
+	@echo "  make e2e-test GNOME_VERSION=48   # Run with GNOME 48"
+	@echo "  make e2e-test GNOME_VERSION=50   # Run with GNOME 50 (Fedora 44)"
+	@echo "  make e2e-test FEDORA_VERSION=42  # Run with Fedora 42 (GNOME 48)"
+	@echo "  make e2e-test-all                # Run for all versions"
+	@echo "  make e2e-fuzz                    # Run the live fuzzer lane (nextile-cnrc)"
+	@echo "  make e2e-debug                   # Interactive debugging"
+	@echo ""
+	@echo "Images are self-contained, built from Fedora base images."
+	@echo "To test rawhide manually: make e2e-test FEDORA_VERSION=rawhide"
+
+help:
+	@echo "NexTile GNOME Shell Extension - Build Targets"
+	@echo ""
+	@echo "Development:"
+	@echo "  dev              Build in debug mode and install locally"
+	@echo "  prod             Build, install, enable, and restart shell"
+	@echo "  test             Build and test in nested Wayland session"
+	@echo "  test-x           Build and test on X11 (restarts gnome-shell)"
+	@echo "  test-open        Open an app in the nested test session"
+	@echo "  log              Follow extension logs from journalctl"
+	@echo ""
+	@echo "Build:"
+	@echo "  build            Compile extension (schemas, translations, metadata)"
+	@echo "  clean            Remove build artifacts"
+	@echo "  dist             Build distributable zip"
+	@echo "  install          Install built extension to ~/.local/share/gnome-shell/extensions/"
+	@echo "  uninstall        Remove installed extension"
+	@echo "  check-deps       Verify build dependencies are installed"
+	@echo ""
+	@echo "Translations (see docs/dev/translations.md):"
+	@echo "  update-pot       Regenerate po/nextile.pot from source (run after adding strings)"
+	@echo "  update-po        Merge the template into each po/<lang>.po"
+	@echo ""
+	@echo "Code Quality:"
+	@echo "  format           Format code with Prettier (writes changes)"
+	@echo "  lint             Check code formatting (no changes)"
+	@echo "  check            Static checks + unit tests: ruff, Prettier, ESLint, typecheck, vitest"
+	@echo ""
+	@echo "Unit Tests:"
+	@echo "  unit-test              Run tests locally"
+	@echo "  unit-test-watch        Run tests in watch mode"
+	@echo "  unit-test-coverage     Run tests with coverage report"
+	@echo "  unit-test-docker       Run tests in Docker"
+	@echo "  unit-test-docker-watch Run tests in Docker (watch mode)"
+	@echo "  unit-test-docker-coverage  Run tests in Docker with coverage"
+	@echo ""
+	@echo "E2E Tests:"
+	@echo "  e2e-test         Run E2E tests (default GNOME 48)"
+	@echo "  e2e-test-all     Run E2E tests for all GNOME versions"
+	@echo "  e2e-debug        Interactive debugging in E2E container"
+	@echo "  e2e-clean        Remove E2E test artifacts and images"
+	@echo "  e2e-versions     List supported GNOME versions"
+	@echo ""
+	@echo "GNOME Shell:"
+	@echo "  enable           Enable the extension"
+	@echo "  disable          Disable the extension"
+	@echo "  restart          Restart GNOME Shell"

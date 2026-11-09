@@ -1,0 +1,856 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { WINDOW_MODES } from "../../../lib/extension/window.js";
+import { NODE_TYPES, LAYOUT_TYPES } from "../../../lib/extension/tree.js";
+import {
+  createMockWindow,
+  createWindowManagerFixture,
+  getWorkspaceAndMonitor,
+} from "../../mocks/helpers/index.js";
+import Meta, { Rectangle } from "../../mocks/gnome/Meta.js";
+import St from "../../mocks/gnome/St.js";
+
+const ACTIVE = "window-tabbed-tab-active";
+
+// A tab double that tracks its style classes like St.Widget does, so tests can
+// assert both the resulting state and how many restyles were requested.
+function makeTab({ active = false } = {}) {
+  const classes = new Set(["window-tabbed-tab"]);
+  if (active) classes.add(ACTIVE);
+  return {
+    _destroyed: false,
+    get_parent: vi.fn(() => ({ add_child: vi.fn() })),
+    has_style_class_name: vi.fn((name) => classes.has(name)),
+    add_style_class_name: vi.fn((name) => classes.add(name)),
+    remove_style_class_name: vi.fn((name) => classes.delete(name)),
+  };
+}
+
+/**
+ * WindowManager border and focus indicator tests
+ *
+ * Tests for window border behaviors including:
+ * - showWindowBorders(): Display border on focused window
+ * - hideWindowBorders(): Remove borders from all windows
+ * - Focus border visibility settings
+ * - Single window border hiding
+ * - Stacked/tabbed container borders
+ * - Floating window borders
+ */
+describe("WindowManager - Borders and Focus Indicators", () => {
+  let ctx;
+
+  beforeEach(() => {
+    ctx = createWindowManagerFixture({
+      settings: {
+        "focus-border-toggle": true,
+        "focus-border-hidden-on-single": false,
+        "split-border-toggle": false,
+        "window-gap-size": 4,
+      },
+    });
+  });
+
+  // Convenience accessor
+  const wm = () => ctx.windowManager;
+
+  describe("hideWindowBorders", () => {
+    it("should hide borders on all window actors", () => {
+      const metaWindow1 = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 960, height: 1080 }),
+        workspace: ctx.workspaces[0],
+      });
+      const metaWindow2 = createMockWindow({
+        rect: new Rectangle({ x: 960, y: 0, width: 960, height: 1080 }),
+        workspace: ctx.workspaces[0],
+      });
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+
+      const nodeWindow1 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow1);
+      nodeWindow1.mode = WINDOW_MODES.TILE;
+
+      const nodeWindow2 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow2);
+      nodeWindow2.mode = WINDOW_MODES.TILE;
+
+      const hideActorBorderSpy = vi.spyOn(wm(), "hideActorBorder");
+
+      wm().hideWindowBorders();
+
+      // Should have called hideActorBorder for each window
+      expect(hideActorBorderSpy).toHaveBeenCalled();
+    });
+
+    it("should remove tab active class from tabbed windows", () => {
+      const metaWindow = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 1920, height: 1080 }),
+        workspace: ctx.workspaces[0],
+      });
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      monitor.layout = LAYOUT_TYPES.TABBED;
+
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+
+      // Create mock tab
+      const mockTab = makeTab({ active: true });
+      nodeWindow.tab = mockTab;
+
+      wm().hideWindowBorders();
+
+      expect(mockTab.remove_style_class_name).toHaveBeenCalledWith("window-tabbed-tab-active");
+    });
+
+    // Bug #2: a STACKED container now uses the same tab-actor + active
+    // class infrastructure as TABBED, but hideWindowBorders only de-highlighted
+    // tabs whose parent isTabbed(). So focusing a sibling in a STACKED container
+    // never cleared the previously-focused window's active class (updateBorderLayout
+    // calls hide then show on every focus change). hideWindowBorders must clear the
+    // active class for STACKED parents too (isStackedOrTabbed).
+    it("should remove tab active class from stacked windows", () => {
+      const metaWindow = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 1920, height: 1080 }),
+        workspace: ctx.workspaces[0],
+      });
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      monitor.layout = LAYOUT_TYPES.STACKED;
+
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+
+      const mockTab = makeTab({ active: true });
+      nodeWindow.tab = mockTab;
+
+      wm().hideWindowBorders();
+
+      expect(mockTab.remove_style_class_name).toHaveBeenCalledWith("window-tabbed-tab-active");
+    });
+  });
+
+  describe("showWindowBorders", () => {
+    it("should apply tiled border class for normal tiled windows", () => {
+      const metaWindow = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 960, height: 1080 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+
+      const mockBorder = {
+        set_style_class_name: vi.fn(),
+        add_style_class_name: vi.fn(),
+        set_size: vi.fn(),
+        set_position: vi.fn(),
+        show: vi.fn(),
+        hide: vi.fn(),
+      };
+      const windowActor = metaWindow.get_compositor_private();
+      windowActor.border = mockBorder;
+
+      global.display.get_focus_window.mockReturnValue(metaWindow);
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      monitor.layout = LAYOUT_TYPES.HSPLIT;
+
+      const nodeWindow1 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow1.mode = WINDOW_MODES.TILE;
+
+      // Add another window so single-window check doesn't apply
+      const metaWindow2 = createMockWindow({
+        rect: new Rectangle({ x: 960, y: 0, width: 960, height: 1080 }),
+        workspace: ctx.workspaces[0],
+      });
+      const nodeWindow2 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow2);
+      nodeWindow2.mode = WINDOW_MODES.TILE;
+
+      wm().showWindowBorders();
+
+      expect(mockBorder.set_style_class_name).toHaveBeenCalledWith("window-tiled-border");
+    });
+
+    it("should apply stacked border class for windows in stacked container", () => {
+      const metaWindow = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 1920, height: 1080 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+
+      const mockBorder = {
+        set_style_class_name: vi.fn(),
+        add_style_class_name: vi.fn(),
+        set_size: vi.fn(),
+        set_position: vi.fn(),
+        show: vi.fn(),
+        hide: vi.fn(),
+      };
+      const windowActor = metaWindow.get_compositor_private();
+      windowActor.border = mockBorder;
+
+      global.display.get_focus_window.mockReturnValue(metaWindow);
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      monitor.layout = LAYOUT_TYPES.STACKED;
+
+      const nodeWindow1 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow1.mode = WINDOW_MODES.TILE;
+
+      const metaWindow2 = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 1920, height: 1080 }),
+        workspace: ctx.workspaces[0],
+      });
+      const nodeWindow2 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow2);
+      nodeWindow2.mode = WINDOW_MODES.TILE;
+
+      wm().showWindowBorders();
+
+      expect(mockBorder.set_style_class_name).toHaveBeenCalledWith("window-stacked-border");
+    });
+
+    it("should apply tabbed border class for windows in tabbed container", () => {
+      const metaWindow = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 1920, height: 1080 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+
+      const mockBorder = {
+        set_style_class_name: vi.fn(),
+        add_style_class_name: vi.fn(),
+        set_size: vi.fn(),
+        set_position: vi.fn(),
+        show: vi.fn(),
+        hide: vi.fn(),
+      };
+      const windowActor = metaWindow.get_compositor_private();
+      windowActor.border = mockBorder;
+
+      global.display.get_focus_window.mockReturnValue(metaWindow);
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      monitor.layout = LAYOUT_TYPES.TABBED;
+
+      const nodeWindow1 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow1.mode = WINDOW_MODES.TILE;
+      nodeWindow1.tab = makeTab();
+
+      const metaWindow2 = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 1920, height: 1080 }),
+        workspace: ctx.workspaces[0],
+      });
+      const nodeWindow2 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow2);
+      nodeWindow2.mode = WINDOW_MODES.TILE;
+
+      wm().showWindowBorders();
+
+      expect(mockBorder.set_style_class_name).toHaveBeenCalledWith("window-tabbed-border");
+    });
+
+    it("should add tab active class for tabbed windows", () => {
+      const metaWindow = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 1920, height: 1080 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+
+      global.display.get_focus_window.mockReturnValue(metaWindow);
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      monitor.layout = LAYOUT_TYPES.TABBED;
+
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+
+      const mockTab = makeTab();
+      nodeWindow.tab = mockTab;
+
+      wm().showWindowBorders();
+
+      expect(mockTab.add_style_class_name).toHaveBeenCalledWith("window-tabbed-tab-active");
+    });
+  });
+
+  // nextile-3e1x: a split inside a tabbed group has its own (CON) tab. It was only
+  // highlighted by its click handler: keyboard/alt-tab focus of a window in the
+  // split never lit it, and once clicked it stayed lit after focus moved away.
+  describe("Nested split tab follows focus (nextile-3e1x)", () => {
+    // TABBED[W1, CON:HSPLIT[W2, W3]], with header-tab doubles on W1 and the CON.
+    function buildNestedSplit() {
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      const tabbed = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.CON, new St.Bin());
+      tabbed.layout = LAYOUT_TYPES.TABBED;
+      const meta = {};
+      const tiled = (parent, id) => {
+        meta[id] = createMockWindow({ id, wm_class: id, workspace: ctx.workspaces[0] });
+        const node = ctx.tree.createNode(parent.nodeValue, NODE_TYPES.WINDOW, meta[id]);
+        node.mode = WINDOW_MODES.TILE;
+        return node;
+      };
+      const w1 = tiled(tabbed, "W1");
+      const split = ctx.tree.createNode(tabbed.nodeValue, NODE_TYPES.CON, new St.Bin());
+      split.layout = LAYOUT_TYPES.HSPLIT;
+      tiled(split, "W2");
+      tiled(split, "W3");
+      w1.tab = makeTab();
+      split.tab = makeTab();
+      return { meta, w1Tab: w1.tab, splitTab: split.tab };
+    }
+
+    const focus = (metaWindow) => {
+      global.display.get_focus_window.mockReturnValue(metaWindow);
+      wm().updateBorderLayout();
+    };
+
+    it("lights the split's tab when a window in it has focus, and clears it after", () => {
+      const { meta, w1Tab, splitTab } = buildNestedSplit();
+
+      focus(meta.W2);
+      expect(splitTab.has_style_class_name(ACTIVE)).toBe(true);
+      expect(w1Tab.has_style_class_name(ACTIVE)).toBe(false);
+
+      focus(meta.W1);
+      expect(splitTab.has_style_class_name(ACTIVE)).toBe(false);
+      expect(w1Tab.has_style_class_name(ACTIVE)).toBe(true);
+    });
+  });
+
+  describe("Focus Border Hidden on Single Window", () => {
+    it("should skip border when single window on single monitor with setting enabled", () => {
+      ctx.settings.get_boolean.mockImplementation((key) => {
+        if (key === "tiling-mode-enabled") return true;
+        if (key === "focus-border-toggle") return true;
+        if (key === "focus-border-hidden-on-single") return true;
+        return false;
+      });
+
+      const metaWindow = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 1920, height: 1080 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+
+      const mockBorder = {
+        set_style_class_name: vi.fn(),
+        add_style_class_name: vi.fn(),
+        set_size: vi.fn(),
+        set_position: vi.fn(),
+        show: vi.fn(),
+        hide: vi.fn(),
+      };
+      const windowActor = metaWindow.get_compositor_private();
+      windowActor.border = mockBorder;
+
+      global.display.get_focus_window.mockReturnValue(metaWindow);
+      global.display.get_n_monitors.mockReturnValue(1);
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+
+      wm().showWindowBorders();
+
+      // Border class should NOT be set for single window with setting enabled
+      expect(mockBorder.set_style_class_name).not.toHaveBeenCalledWith("window-tiled-border");
+    });
+
+    it("should show border when multiple windows exist", () => {
+      ctx.settings.get_boolean.mockImplementation((key) => {
+        if (key === "tiling-mode-enabled") return true;
+        if (key === "focus-border-toggle") return true;
+        if (key === "focus-border-hidden-on-single") return true;
+        return false;
+      });
+
+      const metaWindow1 = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 960, height: 1080 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+      const metaWindow2 = createMockWindow({
+        rect: new Rectangle({ x: 960, y: 0, width: 960, height: 1080 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp2",
+      });
+
+      const mockBorder = {
+        set_style_class_name: vi.fn(),
+        add_style_class_name: vi.fn(),
+        set_size: vi.fn(),
+        set_position: vi.fn(),
+        show: vi.fn(),
+        hide: vi.fn(),
+      };
+      const windowActor = metaWindow1.get_compositor_private();
+      windowActor.border = mockBorder;
+
+      global.display.get_focus_window.mockReturnValue(metaWindow1);
+      global.display.get_n_monitors.mockReturnValue(1);
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      monitor.layout = LAYOUT_TYPES.HSPLIT;
+
+      const nodeWindow1 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow1);
+      nodeWindow1.mode = WINDOW_MODES.TILE;
+
+      const nodeWindow2 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow2);
+      nodeWindow2.mode = WINDOW_MODES.TILE;
+
+      wm().showWindowBorders();
+
+      // Border class should be set when multiple windows exist
+      expect(mockBorder.set_style_class_name).toHaveBeenCalledWith("window-tiled-border");
+    });
+
+    it("should show border when window is alone in container but sibling containers have windows", () => {
+      // Bug fix: Border should appear when multiple windows exist on workspace,
+      // even if each window is in a separate container
+      ctx.settings.get_boolean.mockImplementation((key) => {
+        if (key === "tiling-mode-enabled") return true;
+        if (key === "focus-border-toggle") return true;
+        if (key === "focus-border-hidden-on-single") return true;
+        return false;
+      });
+
+      const metaWindow1 = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 960, height: 1080 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp1",
+      });
+      const metaWindow2 = createMockWindow({
+        rect: new Rectangle({ x: 960, y: 0, width: 960, height: 1080 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp2",
+      });
+
+      const mockBorder = {
+        set_style_class_name: vi.fn(),
+        add_style_class_name: vi.fn(),
+        set_size: vi.fn(),
+        set_position: vi.fn(),
+        show: vi.fn(),
+        hide: vi.fn(),
+      };
+      const windowActor = metaWindow1.get_compositor_private();
+      windowActor.border = mockBorder;
+
+      global.display.get_focus_window.mockReturnValue(metaWindow1);
+      global.display.get_n_monitors.mockReturnValue(1);
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      monitor.layout = LAYOUT_TYPES.HSPLIT;
+
+      // Create two separate containers under the monitor
+      const container1 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.CON, null);
+      container1.layout = LAYOUT_TYPES.HSPLIT;
+      const container2 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.CON, null);
+      container2.layout = LAYOUT_TYPES.HSPLIT;
+
+      // Window 1 is alone in container1
+      const nodeWindow1 = ctx.tree.createNode(container1.nodeValue, NODE_TYPES.WINDOW, metaWindow1);
+      nodeWindow1.mode = WINDOW_MODES.TILE;
+
+      // Window 2 is alone in container2
+      const nodeWindow2 = ctx.tree.createNode(container2.nodeValue, NODE_TYPES.WINDOW, metaWindow2);
+      nodeWindow2.mode = WINDOW_MODES.TILE;
+
+      wm().showWindowBorders();
+
+      // Border should show because there are 2 tiled windows on the monitor,
+      // even though each is alone in its own container
+      expect(mockBorder.set_style_class_name).toHaveBeenCalledWith("window-tiled-border");
+    });
+  });
+
+  describe("Border Settings Integration", () => {
+    it("should not show borders when focus-border-toggle is disabled", () => {
+      ctx.settings.get_boolean.mockImplementation((key) => {
+        if (key === "tiling-mode-enabled") return true;
+        if (key === "focus-border-toggle") return false;
+        return false;
+      });
+
+      const metaWindow = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 960, height: 1080 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+
+      const mockBorder = {
+        set_style_class_name: vi.fn(),
+        add_style_class_name: vi.fn(),
+        set_size: vi.fn(),
+        set_position: vi.fn(),
+        show: vi.fn(),
+        hide: vi.fn(),
+      };
+      const windowActor = metaWindow.get_compositor_private();
+      windowActor.border = mockBorder;
+
+      global.display.get_focus_window.mockReturnValue(metaWindow);
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      monitor.layout = LAYOUT_TYPES.HSPLIT;
+
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+
+      // Add second window
+      const metaWindow2 = createMockWindow({
+        rect: new Rectangle({ x: 960, y: 0, width: 960, height: 1080 }),
+        workspace: ctx.workspaces[0],
+      });
+      const nodeWindow2 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow2);
+      nodeWindow2.mode = WINDOW_MODES.TILE;
+
+      wm().showWindowBorders();
+
+      // Should not set border class when disabled
+      expect(mockBorder.set_style_class_name).not.toHaveBeenCalledWith("window-tiled-border");
+    });
+
+    it("should not show borders when tiling-mode-enabled is disabled", () => {
+      ctx.settings.get_boolean.mockImplementation((key) => {
+        if (key === "tiling-mode-enabled") return false;
+        if (key === "focus-border-toggle") return true;
+        return false;
+      });
+
+      const metaWindow = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 960, height: 1080 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+
+      const mockBorder = {
+        set_style_class_name: vi.fn(),
+        add_style_class_name: vi.fn(),
+        set_size: vi.fn(),
+        set_position: vi.fn(),
+        show: vi.fn(),
+        hide: vi.fn(),
+      };
+      const windowActor = metaWindow.get_compositor_private();
+      windowActor.border = mockBorder;
+
+      global.display.get_focus_window.mockReturnValue(metaWindow);
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      monitor.layout = LAYOUT_TYPES.HSPLIT;
+
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+
+      // Add second window
+      const metaWindow2 = createMockWindow({
+        rect: new Rectangle({ x: 960, y: 0, width: 960, height: 1080 }),
+        workspace: ctx.workspaces[0],
+      });
+      const nodeWindow2 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow2);
+      nodeWindow2.mode = WINDOW_MODES.TILE;
+
+      wm().showWindowBorders();
+
+      // Should not set border class when tiling is disabled
+      expect(mockBorder.set_style_class_name).not.toHaveBeenCalledWith("window-tiled-border");
+    });
+
+    // gh-297 (nextile-mmr): a FLOAT window must not show the floating focus hint
+    // when NexTile tiling is toggled off. Previously window-floated-border was
+    // drawn for floats regardless of tiling-mode-enabled.
+    it("should not show floating border when tiling-mode-enabled is disabled (gh-297)", () => {
+      ctx.settings.get_boolean.mockImplementation((key) => {
+        if (key === "tiling-mode-enabled") return false;
+        if (key === "focus-border-toggle") return true;
+        return false;
+      });
+
+      const metaWindow = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 960, height: 1080 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+
+      const mockBorder = {
+        set_style_class_name: vi.fn(),
+        add_style_class_name: vi.fn(),
+        set_size: vi.fn(),
+        set_position: vi.fn(),
+        show: vi.fn(),
+        hide: vi.fn(),
+      };
+      const windowActor = metaWindow.get_compositor_private();
+      windowActor.border = mockBorder;
+
+      global.display.get_focus_window.mockReturnValue(metaWindow);
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      monitor.layout = LAYOUT_TYPES.HSPLIT;
+
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.FLOAT;
+
+      wm().showWindowBorders();
+
+      // The floating focus hint must be suppressed while tiling is disabled.
+      expect(mockBorder.set_style_class_name).not.toHaveBeenCalledWith("window-floated-border");
+    });
+  });
+
+  describe("Multi-Monitor Border Behavior", () => {
+    it("should show border for single window when multiple monitors exist", () => {
+      ctx.settings.get_boolean.mockImplementation((key) => {
+        if (key === "tiling-mode-enabled") return true;
+        if (key === "focus-border-toggle") return true;
+        if (key === "focus-border-hidden-on-single") return true;
+        return false;
+      });
+      ctx.settings.get_uint.mockImplementation((key) => {
+        if (key === "window-gap-size") return 0;
+        return 0;
+      });
+
+      const metaWindow = createMockWindow({
+        rect: new Rectangle({ x: 0, y: 0, width: 1920, height: 1080 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+
+      const mockBorder = {
+        set_style_class_name: vi.fn(),
+        add_style_class_name: vi.fn(),
+        set_size: vi.fn(),
+        set_position: vi.fn(),
+        show: vi.fn(),
+        hide: vi.fn(),
+      };
+      const windowActor = metaWindow.get_compositor_private();
+      windowActor.border = mockBorder;
+
+      global.display.get_focus_window.mockReturnValue(metaWindow);
+      global.display.get_n_monitors.mockReturnValue(2); // Multiple monitors
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+
+      wm().showWindowBorders();
+
+      // Should show border with multiple monitors even for single window
+      expect(mockBorder.set_style_class_name).toHaveBeenCalledWith("window-tiled-border");
+    });
+  });
+
+  // Bug #164 (nextile-uqx): on Wayland HiDPI, move() aligns the window to buffer
+  // scale via _alignToBufferScale, but showWindowBorders() sized the border from
+  // the raw frame rect — so the border ended up offset/smaller than the window.
+  describe("Bug #164: HiDPI buffer-scale border alignment", () => {
+    beforeEach(() => {
+      Meta.__setWayland(true);
+      St.__setScaleFactor(2);
+    });
+
+    afterEach(() => {
+      Meta.__setWayland(false);
+      St.__resetScaleFactor();
+    });
+
+    it("aligns the tiled border rect to buffer scale, matching move()", () => {
+      // A frame rect that is NOT already buffer-scale aligned (odd coords/sizes).
+      const rawRect = new Rectangle({ x: 101, y: 101, width: 961, height: 541 });
+      const metaWindow = createMockWindow({
+        rect: rawRect,
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+
+      const mockBorder = {
+        set_style_class_name: vi.fn(),
+        add_style_class_name: vi.fn(),
+        set_size: vi.fn(),
+        set_position: vi.fn(),
+        show: vi.fn(),
+        hide: vi.fn(),
+      };
+      metaWindow.get_compositor_private().border = mockBorder;
+
+      global.display.get_focus_window.mockReturnValue(metaWindow);
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      monitor.layout = LAYOUT_TYPES.HSPLIT;
+
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+
+      // Second tiled sibling so the single-window border-skip path doesn't apply.
+      const metaWindow2 = createMockWindow({
+        rect: new Rectangle({ x: 1062, y: 101, width: 961, height: 541 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+      const nodeWindow2 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow2);
+      nodeWindow2.mode = WINDOW_MODES.TILE;
+
+      wm().showWindowBorders();
+
+      // nextile-hcbz: inset is now dpi-scaled (3 * 2 at this scale) to match the CSS
+      // border-width St scales to 6 physical px.
+      const inset = 3 * 2;
+      const align = (v) => wm()._alignToBufferScale(v, 2);
+      const ax = align(rawRect.x);
+      const ay = align(rawRect.y);
+      const aw = align(rawRect.width);
+      const ah = align(rawRect.height);
+
+      // Border must be sized/positioned from the ALIGNED rect, not the raw one.
+      expect(mockBorder.set_size).toHaveBeenCalledWith(aw + inset * 2, ah + inset * 2);
+      expect(mockBorder.set_position).toHaveBeenCalledWith(ax - inset, ay - inset);
+    });
+
+    // nextile-hcbz: the border's CSS border-width (3px) is scaled to 6 physical px by
+    // St at 2x, but the JS inset that positions the border actor was a raw 3 — so at
+    // integer HiDPI the border painted 3 physical px over window content on every
+    // straight edge. The inset must scale by dpi() to match the drawn border width.
+    it("scales the border inset by dpi() so the ring stays outside the window", () => {
+      // Already buffer-scale-aligned coords (all even) so _alignToBufferScale is
+      // identity here, isolating the inset-scaling behavior from the #164 alignment.
+      const rect = new Rectangle({ x: 100, y: 100, width: 960, height: 540 });
+      const metaWindow = createMockWindow({
+        rect,
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+
+      const mockBorder = {
+        set_style_class_name: vi.fn(),
+        add_style_class_name: vi.fn(),
+        set_size: vi.fn(),
+        set_position: vi.fn(),
+        show: vi.fn(),
+        hide: vi.fn(),
+      };
+      metaWindow.get_compositor_private().border = mockBorder;
+      global.display.get_focus_window.mockReturnValue(metaWindow);
+
+      const { monitor } = getWorkspaceAndMonitor(ctx);
+      monitor.layout = LAYOUT_TYPES.HSPLIT;
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+
+      // Second tiled sibling so the single-window border-skip path doesn't apply.
+      const metaWindow2 = createMockWindow({
+        rect: new Rectangle({ x: 1060, y: 100, width: 960, height: 540 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+      const nodeWindow2 = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow2);
+      nodeWindow2.mode = WINDOW_MODES.TILE;
+
+      wm().showWindowBorders();
+
+      // inset must be dpi-scaled to 6 (3 * 2). Before nextile-hcbz it was a raw 3, so
+      // the border grew only 3px while its drawn width was 6 — overlapping content.
+      const inset = 3 * 2;
+      expect(mockBorder.set_position).toHaveBeenCalledWith(100 - inset, 100 - inset);
+      expect(mockBorder.set_size).toHaveBeenCalledWith(960 + inset * 2, 540 + inset * 2);
+    });
+  });
+});
+
+/**
+ * Tab active-class churn (Cogl shadow crash, mutter#4973).
+ *
+ * The active tab carries a CSS box-shadow. updateBorderLayout() used to strip the
+ * active class from every tab and re-add it to the focused one on every focus /
+ * render update, forcing St to drop and rebuild the tab's theme node and shadow
+ * pipeline each time. That rebuild path is where gnome-shell crashed. A tab whose
+ * state does not change must not be restyled at all.
+ */
+describe("WindowManager - tab active class is only changed when focus changes", () => {
+  let ctx;
+  const wm = () => ctx.windowManager;
+
+  beforeEach(() => {
+    ctx = createWindowManagerFixture({
+      settings: {
+        "focus-border-toggle": true,
+        "focus-border-hidden-on-single": false,
+        "split-border-toggle": false,
+        "window-gap-size": 4,
+      },
+    });
+  });
+
+  function tabbedPair(layout) {
+    const { monitor } = getWorkspaceAndMonitor(ctx);
+    monitor.layout = layout;
+    const mk = (x) => {
+      const metaWindow = createMockWindow({
+        rect: new Rectangle({ x, y: 0, width: 960, height: 1080 }),
+        workspace: ctx.workspaces[0],
+        wm_class: "TestApp",
+      });
+      const nodeWindow = ctx.tree.createNode(monitor.nodeValue, NODE_TYPES.WINDOW, metaWindow);
+      nodeWindow.mode = WINDOW_MODES.TILE;
+      return { metaWindow, nodeWindow };
+    };
+    return [mk(0), mk(960)];
+  }
+
+  it.each([LAYOUT_TYPES.TABBED, LAYOUT_TYPES.STACKED])(
+    "%s: an already-active focused tab is not restyled by updateBorderLayout",
+    (layout) => {
+      const [focused, other] = tabbedPair(layout);
+      focused.nodeWindow.tab = makeTab({ active: true });
+      other.nodeWindow.tab = makeTab();
+      global.display.get_focus_window.mockReturnValue(focused.metaWindow);
+
+      wm().updateBorderLayout();
+
+      for (const { nodeWindow } of [focused, other]) {
+        expect(nodeWindow.tab.add_style_class_name).not.toHaveBeenCalled();
+        expect(nodeWindow.tab.remove_style_class_name).not.toHaveBeenCalled();
+      }
+      expect(focused.nodeWindow.tab.has_style_class_name(ACTIVE)).toBe(true);
+      expect(other.nodeWindow.tab.has_style_class_name(ACTIVE)).toBe(false);
+    }
+  );
+
+  it("moves the active class exactly once when focus moves to a sibling", () => {
+    const [previous, focused] = tabbedPair(LAYOUT_TYPES.TABBED);
+    previous.nodeWindow.tab = makeTab({ active: true });
+    focused.nodeWindow.tab = makeTab();
+    global.display.get_focus_window.mockReturnValue(focused.metaWindow);
+
+    wm().updateBorderLayout();
+
+    expect(previous.nodeWindow.tab.remove_style_class_name).toHaveBeenCalledOnce();
+    expect(previous.nodeWindow.tab.add_style_class_name).not.toHaveBeenCalled();
+    expect(focused.nodeWindow.tab.add_style_class_name).toHaveBeenCalledOnce();
+    expect(focused.nodeWindow.tab.remove_style_class_name).not.toHaveBeenCalled();
+    expect(previous.nodeWindow.tab.has_style_class_name(ACTIVE)).toBe(false);
+    expect(focused.nodeWindow.tab.has_style_class_name(ACTIVE)).toBe(true);
+  });
+
+  it("hideWindowBorders on its own still clears every active tab", () => {
+    const [a, b] = tabbedPair(LAYOUT_TYPES.TABBED);
+    a.nodeWindow.tab = makeTab({ active: true });
+    b.nodeWindow.tab = makeTab();
+    global.display.get_focus_window.mockReturnValue(a.metaWindow);
+
+    wm().hideWindowBorders();
+
+    expect(a.nodeWindow.tab.has_style_class_name(ACTIVE)).toBe(false);
+    expect(b.nodeWindow.tab.remove_style_class_name).not.toHaveBeenCalled();
+  });
+
+  it("showWindowBorders does not re-add an active class that is already set", () => {
+    const [focused] = tabbedPair(LAYOUT_TYPES.TABBED);
+    focused.nodeWindow.tab = makeTab({ active: true });
+    global.display.get_focus_window.mockReturnValue(focused.metaWindow);
+
+    wm().showWindowBorders();
+
+    expect(focused.nodeWindow.tab.add_style_class_name).not.toHaveBeenCalled();
+  });
+});

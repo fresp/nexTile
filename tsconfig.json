@@ -1,0 +1,13 @@
+{
+  "include": ["lib/**/*", "extension.js", "prefs.js", "types/**/*"],
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "strictNullChecks": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "skipLibCheck": true,
+    "lib": ["ES2022"],
+    "target": "ES2022"
+  }
+}

@@ -1,0 +1,77 @@
+/*
+ * This file is part of the NexTile GNOME extension
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+import Gdk from "gi://Gdk";
+import Gtk from "gi://Gtk";
+
+import { ExtensionPreferences } from "resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js";
+
+import { KeyboardPage } from "./lib/prefs/keyboard.js";
+import { AppearancePage } from "./lib/prefs/appearance.js";
+import { SettingsPage, makeAboutButton, findHeaderBar } from "./lib/prefs/settings.js";
+import { FloatingPage } from "./lib/prefs/floating.js";
+import { PortabilityPage } from "./lib/prefs/portability.js";
+import { PREFS_TITLE } from "./lib/shared/settings.js";
+
+export default class NexTileExtensionPreferences extends ExtensionPreferences {
+  settings = this.getSettings();
+
+  kbdSettings = this.getSettings("org.gnome.shell.extensions.nextile.keybindings");
+
+  /** @param {ConstructorParameters<typeof ExtensionPreferences>} args */
+  constructor(...args) {
+    super(...args);
+    const iconPath = this.dir.get_child("resources").get_child("icons").get_path();
+    const display = Gdk.Display.get_default();
+    if (display && iconPath) {
+      const iconTheme = Gtk.IconTheme.get_for_display(display);
+      iconTheme.add_search_path(iconPath);
+    }
+  }
+
+  fillPreferencesWindow(window) {
+    this.window = window;
+    window.set_title(PREFS_TITLE);
+    window._settings = this.settings;
+    window._kbdSettings = this.kbdSettings;
+
+    // Put About in the window header bar. Adw.PreferencesWindow doesn't expose
+    // its header bar, so find it before adding pages (only the chrome exists
+    // yet). If traversal fails on some shell version, fall back to the Tiling
+    // page via SettingsPage's aboutButton.
+    const aboutButton = makeAboutButton(window, this.metadata);
+    const headerBar = findHeaderBar(window);
+    if (headerBar) headerBar.pack_end(aboutButton);
+    this.aboutButton = headerBar ? null : aboutButton;
+
+    window.add(new SettingsPage(this));
+    window.add(new AppearancePage(this));
+    window.add(new KeyboardPage(this));
+    window.add(new FloatingPage(this));
+    window.add(
+      new PortabilityPage({
+        settings: this.settings,
+        kbdSettings: this.kbdSettings,
+        dir: this.dir,
+        window,
+      })
+    );
+    window.search_enabled = true;
+    window.can_navigate_back = true;
+  }
+}
