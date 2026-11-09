@@ -14,6 +14,22 @@ workspace-centric window placement.
 - Per-monitor, per-workspace trees. See [multi-monitor](docs/user/monitors.md).
 - Settings and keybindings as [portable JSON](docs/user/config.md).
 
+## Screenshots
+
+**Tiling.** Files, Console and Text Editor share one workspace: a horizontal split,
+with the right half split again vertically. The focused window has the red border.
+
+![Three windows tiled on one workspace: Files on the left, Console above Text Editor on the right](docs/images/tiling.png)
+
+**Launch to workspace.** Files, Console and Text Editor were each opened from the
+dash and each got its own workspace, shown in the overview's workspace strip. The
+top bar names the app the current workspace was launched for.
+
+![GNOME overview with Files, Console and Text Editor on separate workspaces and "Text Editor" beside the NexTile icon in the top bar](docs/images/launch-workspaces.png)
+
+Both were captured on GNOME Shell 50 with the default NexTile palette and an
+8 px gap.
+
 ## Install
 
 Build from source (see [CONTRIBUTING.md](CONTRIBUTING.md)), then install the
