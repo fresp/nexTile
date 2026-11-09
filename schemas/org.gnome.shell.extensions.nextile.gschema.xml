@@ -581,6 +581,11 @@
             <summary>Return to the workspace the current one was launched from</summary>
         </key>
 
+        <key type="as" name="prefs-launch-workspace-toggle">
+            <default><![CDATA[[]]]></default>
+            <summary>Turn launching windows into a new workspace on or off</summary>
+        </key>
+
         <key type="as" name="window-expand">
             <default><![CDATA[['<Super>bracketright']]]></default>
             <summary>Expand window</summary>

@@ -238,6 +238,10 @@
           "$ref": "#/definitions/keybinding",
           "description": "Return to the workspace the current launched workspace came from"
         },
+        "prefs-launch-workspace-toggle": {
+          "$ref": "#/definitions/keybinding",
+          "description": "Turn launching windows into a new workspace on or off"
+        },
         "window-expand": {
           "$ref": "#/definitions/keybinding",
           "description": "Expand window in all directions"
