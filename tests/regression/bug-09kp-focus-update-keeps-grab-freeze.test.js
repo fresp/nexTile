@@ -52,7 +52,7 @@ describe("Bug nextile-09kp: a queued focus-update keeps the drag freeze", () => 
   function focusFirst(layout) {
     const ws = ctx.workspaces[0];
     const [a, b, c] = ["A", "B", "C"].map((wm_class) =>
-      createMockWindow({ wm_class, workspace: ws })
+      createMockWindow({ wm_class, workspace: ws }),
     );
     [a, b, c].forEach((w) => wm.trackWindow(null, w));
     flush();

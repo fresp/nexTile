@@ -813,7 +813,7 @@ describe("WindowManager - tab active class is only changed when focus changes", 
       }
       expect(focused.nodeWindow.tab.has_style_class_name(ACTIVE)).toBe(true);
       expect(other.nodeWindow.tab.has_style_class_name(ACTIVE)).toBe(false);
-    }
+    },
   );
 
   it("moves the active class exactly once when focus moves to a sibling", () => {

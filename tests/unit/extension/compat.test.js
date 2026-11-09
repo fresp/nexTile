@@ -322,7 +322,7 @@ describe("isFixedSize", () => {
       window.set_maximize_flags(MaximizeFlags.BOTH);
       expect(window.allows_resize()).toBe(false);
       expect(Compat.isFixedSize(window)).toBe(false);
-    }
+    },
   );
 
   it.each(["47.0", "51.0"])(
@@ -332,7 +332,7 @@ describe("isFixedSize", () => {
       const window = new Window({ allows_resize: true, fullscreen: true });
       expect(window.resizeable).toBe(false);
       expect(Compat.isFixedSize(window)).toBe(false);
-    }
+    },
   );
 
   it.each(["47.0", "51.0"])(
@@ -342,6 +342,6 @@ describe("isFixedSize", () => {
       const window = new Window({ allows_resize: false });
       window.set_maximize_flags(MaximizeFlags.BOTH);
       expect(Compat.isFixedSize(window)).toBe(true);
-    }
+    },
   );
 });

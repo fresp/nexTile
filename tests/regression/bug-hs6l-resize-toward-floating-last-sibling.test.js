@@ -45,19 +45,19 @@ describe("Bug nextile-hs6l - resize toward a floating last sibling", () => {
     const left = ctx.tree.createNode(
       monitor.nodeValue,
       NODE_TYPES.WINDOW,
-      createMockWindow({ workspace: workspace0() })
+      createMockWindow({ workspace: workspace0() }),
     );
     left.mode = WINDOW_MODES.TILE;
     const middle = ctx.tree.createNode(
       monitor.nodeValue,
       NODE_TYPES.WINDOW,
-      createMockWindow({ workspace: workspace0() })
+      createMockWindow({ workspace: workspace0() }),
     );
     middle.mode = WINDOW_MODES.TILE;
     const right = ctx.tree.createNode(
       monitor.nodeValue,
       NODE_TYPES.WINDOW,
-      createMockWindow({ workspace: workspace0() })
+      createMockWindow({ workspace: workspace0() }),
     );
     right.mode = WINDOW_MODES.FLOAT;
 

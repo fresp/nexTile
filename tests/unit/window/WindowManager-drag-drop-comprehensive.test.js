@@ -94,7 +94,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.TILE // Not GRAB_TILE
+        WINDOW_MODES.TILE, // Not GRAB_TILE
       );
 
       setPointer(100, 540);
@@ -113,7 +113,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(100, 540);
@@ -132,7 +132,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Create invalid node (missing nodeValue)
@@ -167,7 +167,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Left edge (0-30% of width)
@@ -197,7 +197,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Top edge (0-30% of height)
@@ -227,7 +227,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Right edge (70-100% of width)
@@ -257,7 +257,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Bottom edge (70-100% of height)
@@ -299,7 +299,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(100, 540);
@@ -331,7 +331,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(1800, 540);
@@ -363,7 +363,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(960, 100);
@@ -395,7 +395,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(960, 1000);
@@ -426,7 +426,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Center region
@@ -476,7 +476,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 960, y: 0, width: 960, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Drop on left edge of target
@@ -519,7 +519,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 540, width: 1920, height: 540 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Drop on top edge of target
@@ -555,7 +555,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 960, y: 0, width: 960, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Drop on left edge of target (only window in container)
@@ -596,7 +596,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(100, 540);
@@ -613,7 +613,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       // an append too — assert the ordering the test name promises).
       const leftMonitor = target.parentNode;
       expect(leftMonitor.childNodes.indexOf(dragged.parentNode)).toBeLessThan(
-        leftMonitor.childNodes.indexOf(target)
+        leftMonitor.childNodes.indexOf(target),
       );
     });
 
@@ -636,7 +636,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(1800, 540);
@@ -650,7 +650,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       // A RIGHT drop appends: the detached dragged CON lands AFTER target.
       const rightMonitor = target.parentNode;
       expect(rightMonitor.childNodes.indexOf(dragged.parentNode)).toBeGreaterThan(
-        rightMonitor.childNodes.indexOf(target)
+        rightMonitor.childNodes.indexOf(target),
       );
     });
 
@@ -673,7 +673,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(960, 100);
@@ -687,7 +687,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       // A TOP drop prepends: the detached dragged CON lands BEFORE target.
       const topMonitor = target.parentNode;
       expect(topMonitor.childNodes.indexOf(dragged.parentNode)).toBeLessThan(
-        topMonitor.childNodes.indexOf(target)
+        topMonitor.childNodes.indexOf(target),
       );
     });
 
@@ -710,7 +710,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(960, 1000);
@@ -724,7 +724,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       // A BOTTOM drop appends: the detached dragged CON lands AFTER target.
       const bottomMonitor = target.parentNode;
       expect(bottomMonitor.childNodes.indexOf(dragged.parentNode)).toBeGreaterThan(
-        bottomMonitor.childNodes.indexOf(target)
+        bottomMonitor.childNodes.indexOf(target),
       );
     });
   });
@@ -762,7 +762,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 960, y: 0, width: 960, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Center drop
@@ -804,7 +804,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 960, y: 0, width: 960, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Center drop
@@ -850,7 +850,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 360 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Drop LEFT on win2
@@ -890,7 +890,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 640, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Drop TOP on win2
@@ -917,7 +917,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 960, y: 0, width: 960, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Drop TOP on target (only 2 windows)
@@ -925,7 +925,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       wm().nodeWinAtPointer = target;
 
       const containersBefore = monitor.childNodes.filter(
-        (c) => c.nodeType === NODE_TYPES.CON
+        (c) => c.nodeType === NODE_TYPES.CON,
       ).length;
 
       wm().moveWindowToPointer(dragged, false);
@@ -966,7 +966,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 640, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Drop RIGHT on win3
@@ -1006,7 +1006,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 360 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Drop TOP on win2 (middle window)
@@ -1042,7 +1042,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 960, y: 0, width: 960, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Add a mock tab with a stable parent so we can assert cleanup.
@@ -1074,7 +1074,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 960, y: 0, width: 960, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Add a mock tab with null parent. remove_child must NOT be invoked when
@@ -1117,7 +1117,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 960, y: 0, width: 960, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Add a mock tab that throws on get_parent
@@ -1161,7 +1161,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       const previewHint = {
@@ -1200,7 +1200,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       const previewHint = {
@@ -1239,7 +1239,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       const previewHint = {
@@ -1266,7 +1266,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       const previewHint = {
@@ -1372,7 +1372,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 960, y: 0, width: 960, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(100, 540);
@@ -1416,7 +1416,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 540 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(960, 600);
@@ -1455,7 +1455,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 960, y: 0, width: 960, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(480, 540);
@@ -1481,7 +1481,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 540, width: 1920, height: 540 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(960, 270);
@@ -1554,7 +1554,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1000, height: 1000 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Exactly at 30% boundary (should be left region)
@@ -1584,7 +1584,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1000, height: 1000 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Just past 30% (should be center region if also past top/bottom)
@@ -1610,7 +1610,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1000, height: 1000 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       // Top-left corner (both left and top regions)
@@ -1655,7 +1655,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 540 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(100, 270);
@@ -1687,7 +1687,7 @@ describe("WindowManager - moveWindowToPointer Comprehensive", () => {
       const { nodeWindow: dragged } = createWindowWithRect(
         monitor,
         { x: 0, y: 0, width: 1920, height: 1080 },
-        WINDOW_MODES.GRAB_TILE
+        WINDOW_MODES.GRAB_TILE,
       );
 
       setPointer(100, 540);

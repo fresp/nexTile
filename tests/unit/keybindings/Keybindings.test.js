@@ -121,14 +121,14 @@ describe("Keybindings", () => {
     it("window-toggle-float should dispatch FloatToggle command", () => {
       keybindings._bindings["window-toggle-float"]();
       expect(mockExt.extWm.command).toHaveBeenCalledWith(
-        expect.objectContaining({ name: "FloatToggle", mode: "float" })
+        expect.objectContaining({ name: "FloatToggle", mode: "float" }),
       );
     });
 
     it("window-toggle-always-float should dispatch FloatClassToggle command", () => {
       keybindings._bindings["window-toggle-always-float"]();
       expect(mockExt.extWm.command).toHaveBeenCalledWith(
-        expect.objectContaining({ name: "FloatClassToggle", mode: "float" })
+        expect.objectContaining({ name: "FloatClassToggle", mode: "float" }),
       );
     });
 

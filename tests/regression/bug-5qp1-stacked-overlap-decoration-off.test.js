@@ -64,7 +64,7 @@ describe("nextile-5qp1: stacked overlap when tab decoration disabled", () => {
       container,
       child,
       { stackedHeight: 0, tiledChildren: [child, sibling] },
-      0
+      0,
     );
 
     expect(container.decoration.visible).toBe(false);

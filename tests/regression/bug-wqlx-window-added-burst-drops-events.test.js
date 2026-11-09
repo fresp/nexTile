@@ -60,12 +60,12 @@ describe("nextile-wqlx: window-added debounce re-homes every window in a burst",
     expect(extWm.updateMetaWorkspaceMonitor).toHaveBeenCalledWith(
       "window-added",
       winA.get_monitor(),
-      winA
+      winA,
     );
     expect(extWm.updateMetaWorkspaceMonitor).toHaveBeenCalledWith(
       "window-added",
       winB.get_monitor(),
-      winB
+      winB,
     );
     expect(extWm._wsWindowAddSrcId).toBe(0);
   });
@@ -89,7 +89,7 @@ describe("nextile-wqlx: window-added debounce re-homes every window in a burst",
     expect(extWm.updateMetaWorkspaceMonitor).toHaveBeenCalledWith(
       "window-added",
       live.get_monitor(),
-      live
+      live,
     );
     expect(extWm._wsWindowAddSrcId).toBe(0);
   });

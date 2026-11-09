@@ -134,13 +134,13 @@ describe("sortFloatOverrides (nextile-n29i)", () => {
 describe("floatRowSubtitle (nextile-4w7e)", () => {
   it("uses wmClass as the subtitle when present", () => {
     expect(floatRowSubtitle({ wmClass: "firefox", mode: "float" }, "Title-only rule")).toBe(
-      "firefox"
+      "firefox",
     );
   });
 
   it("falls back to the title-only label for a classless rule (no blank subtitle)", () => {
     expect(
-      floatRowSubtitle({ wmTitle: "Picture-in-Picture", mode: "float" }, "Title-only rule")
+      floatRowSubtitle({ wmTitle: "Picture-in-Picture", mode: "float" }, "Title-only rule"),
     ).toBe("Title-only rule");
   });
 });

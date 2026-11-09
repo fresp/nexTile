@@ -223,7 +223,7 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
         monitor.nodeValue,
         NODE_TYPES.WINDOW,
         existing,
-        WINDOW_MODES.TILE
+        WINDOW_MODES.TILE,
       );
       wm().renderTree("test");
       const beforeRect = { ...existingNode.renderRect };
@@ -265,7 +265,7 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
       // Mutter returns null for a workspace that does not exist; the shared mock
       // invents one for any index.
       ctx.workspaceManager.get_workspace_by_index.mockImplementation(
-        (i) => ctx.workspaces[i] ?? null
+        (i) => ctx.workspaces[i] ?? null,
       );
       const metaWindow = createMockWindow({ wm_class: "Chat", workspace: ctx.workspaces[0] });
       emitWindowCreated(metaWindow);
@@ -325,7 +325,7 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
       activeIndex = 0;
       ctx.workspaceManager.get_active_workspace_index.mockImplementation(() => activeIndex);
       ctx.workspaceManager.get_active_workspace.mockImplementation(
-        () => ctx.workspaces[activeIndex]
+        () => ctx.workspaces[activeIndex],
       );
       vi.spyOn(Workspace.prototype, "activate").mockImplementation(function () {
         activeIndex = ctx.workspaces.indexOf(this);
@@ -436,7 +436,7 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
         monitor.nodeValue,
         NODE_TYPES.WINDOW,
         focused,
-        WINDOW_MODES.TILE
+        WINDOW_MODES.TILE,
       );
       ctx.display.get_focus_window.mockReturnValue(focused);
       wm().renderTree("test");
@@ -523,7 +523,7 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
         // The grouped workspace vanished (user closed it); the next same-pid
         // window must not be sent to a dead index.
         ctx.workspaceManager.get_workspace_by_index = vi.fn((i) =>
-          i === 2 ? null : ctx.workspaces[i] ?? null
+          i === 2 ? null : (ctx.workspaces[i] ?? null),
         );
         const second = createMockWindow({ pid: 55, workspace: ctx.workspaces[0] });
         emitWindowCreated(second);

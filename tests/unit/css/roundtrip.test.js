@@ -302,7 +302,7 @@ describe("CSS parse/stringify round-trip (seeded property)", () => {
       const firstParse = parse(x, { silent: true });
       expect(
         firstParse.stylesheet.parsingErrors,
-        `generator emitted out-of-grammar input for seed ${seed}:\n${x}`
+        `generator emitted out-of-grammar input for seed ${seed}:\n${x}`,
       ).toHaveLength(0);
 
       const a = stringify(firstParse);
@@ -312,7 +312,7 @@ describe("CSS parse/stringify round-trip (seeded property)", () => {
       // A dropped/mangled rule breaks this and prints the reproducing seed.
       expect(
         b,
-        `round-trip not idempotent for seed ${seed}\n--- input ---\n${x}\n--- first stringify ---\n${a}\n--- second stringify ---\n${b}`
+        `round-trip not idempotent for seed ${seed}\n--- input ---\n${x}\n--- first stringify ---\n${a}\n--- second stringify ---\n${b}`,
       ).toBe(a);
     }
   });
@@ -329,7 +329,7 @@ describe("CSS parse/stringify round-trip (seeded property)", () => {
       // with no parse error") must change the count, not just top-level losses.
       expect(
         countRules(reAst),
-        `rule count changed on round trip for seed ${seed}\n--- input ---\n${x}\n--- output ---\n${a}`
+        `rule count changed on round trip for seed ${seed}\n--- input ---\n${x}\n--- output ---\n${a}`,
       ).toBe(countRules(ast));
 
       // Declaration count is the anti-drop guard idempotence can't give: a clean
@@ -337,7 +337,7 @@ describe("CSS parse/stringify round-trip (seeded property)", () => {
       // already-idempotent output, so only a direct count catches it.
       expect(
         countDeclarations(reAst),
-        `declaration count changed on round trip for seed ${seed}\n--- input ---\n${x}\n--- output ---\n${a}`
+        `declaration count changed on round trip for seed ${seed}\n--- input ---\n${x}\n--- output ---\n${a}`,
       ).toBe(countDeclarations(ast));
     }
   });

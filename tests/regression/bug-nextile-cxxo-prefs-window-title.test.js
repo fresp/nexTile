@@ -29,7 +29,7 @@ describe("nextile-cxxo: the prefs window title matches prefsTitle and the bundle
 
   it("the bundled windows.json floats the prefs window", () => {
     const bundled = JSON.parse(
-      readFileSync(resolve(__dirname, "../../config/windows.json"), "utf8")
+      readFileSync(resolve(__dirname, "../../config/windows.json"), "utf8"),
     );
     ctx.windowManager.windowProps = bundled;
     const prefs = createMockWindow({ wm_class: "org.gnome.Shell.Extensions", title: PREFS_TITLE });

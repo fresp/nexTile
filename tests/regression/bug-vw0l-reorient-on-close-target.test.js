@@ -63,7 +63,7 @@ describe("Bug nextile-vw0l: reorient-on-close targets the surviving container", 
     const floatNode = ctx.tree.createNode(
       con.nodeValue,
       NODE_TYPES.WINDOW,
-      createMockWindow({ id: 3 })
+      createMockWindow({ id: 3 }),
     );
     floatNode.mode = WINDOW_MODES.FLOAT;
 

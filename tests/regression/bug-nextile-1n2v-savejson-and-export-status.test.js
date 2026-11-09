@@ -38,7 +38,7 @@ describe("Bug nextile-1n2v/nextile-q9e5: save/export/import report real success"
       const f = fileWith(
         vi.fn(() => {
           throw new Error("GLib.Error g-io-error-quark: Permission denied");
-        })
+        }),
       );
       expect(cm._saveJsonConfig(f, { a: 1 }, "settings.json")).toBe(false);
     });

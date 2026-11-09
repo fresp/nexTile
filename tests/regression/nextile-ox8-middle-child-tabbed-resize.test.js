@@ -200,6 +200,6 @@ describe("nextile-ox8 (#64): resize a MIDDLE-child tabbed container", () => {
       // The column's own split is along the other axis and does not change.
       expect(v.group.percent).toBeCloseTo(0.5, 5);
       expect(v.nodeY.percent).toBeCloseTo(0.5, 5);
-    }
+    },
   );
 });

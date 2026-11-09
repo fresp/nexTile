@@ -7,7 +7,7 @@ import { NEXTILE_PRESET, applyPreset } from "../../../lib/prefs/keymap-presets.j
 
 const schemaPath = join(
   dirname(fileURLToPath(import.meta.url)),
-  "../../../schemas/org.gnome.shell.extensions.nextile.gschema.xml"
+  "../../../schemas/org.gnome.shell.extensions.nextile.gschema.xml",
 );
 
 /** Keybinding-schema `as` defaults, as { key: [accels] }. */
@@ -16,7 +16,7 @@ function keybindingDefaults() {
   const kbSchema = xml.slice(xml.indexOf('id="org.gnome.shell.extensions.nextile.keybindings"'));
   const defaults = {};
   for (const [, key, body] of kbSchema.matchAll(
-    /<key type="as" name="([^"]+)">\s*<default><!\[CDATA\[(.*?)\]\]><\/default>/gs
+    /<key type="as" name="([^"]+)">\s*<default><!\[CDATA\[(.*?)\]\]><\/default>/gs,
   )) {
     defaults[key] = [...body.matchAll(/'([^']*)'/g)].map((m) => m[1]);
   }

@@ -33,12 +33,12 @@ describe("Bug nextile-bxng: no-op edge move preserves custom sibling percents", 
     const a = ctx.tree.createNode(
       monitor.nodeValue,
       NODE_TYPES.WINDOW,
-      createMockWindow({ id: 1 })
+      createMockWindow({ id: 1 }),
     );
     const b = ctx.tree.createNode(
       monitor.nodeValue,
       NODE_TYPES.WINDOW,
-      createMockWindow({ id: 2 })
+      createMockWindow({ id: 2 }),
     );
     a.mode = WINDOW_MODES.TILE;
     b.mode = WINDOW_MODES.TILE;

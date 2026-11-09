@@ -92,7 +92,7 @@ export default class NexTileExtension extends Extension {
       // returning routes it through the same restore path as any other failure.
       if (!settings) throw new Error("enable: settings unavailable");
       this._overrideReconcileIds = ["tiling-mode-enabled", "disable-edge-tiling"].map((key) =>
-        settings.connect(`changed::${key}`, () => this._reconcileOverridesFor(key))
+        settings.connect(`changed::${key}`, () => this._reconcileOverridesFor(key)),
       );
 
       this.configMgr = new ConfigManager(this);
@@ -205,7 +205,7 @@ export default class NexTileExtension extends Extension {
     const id = overrideId(desc);
     const snapshot = this._readSnapshot();
     const idx = this._savedSettings.findIndex(
-      (s) => s.schemaId === desc.schemaId && s.key === desc.key
+      (s) => s.schemaId === desc.schemaId && s.key === desc.key,
     );
     if (idx >= 0) {
       const saved = this._savedSettings[idx];

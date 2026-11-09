@@ -110,7 +110,7 @@ describe("config-sync whitelist completeness (nextile-nuny / nextile-eny3)", () 
       onlyA.length === 0 && onlyB.length === 0,
       `SETTINGS_KEYS drifted from the gschema.\n` +
         `  In SETTINGS_KEYS but not portable gschema keys: ${JSON.stringify(onlyA)}\n` +
-        `  Portable gschema keys missing from SETTINGS_KEYS: ${JSON.stringify(onlyB)}`
+        `  Portable gschema keys missing from SETTINGS_KEYS: ${JSON.stringify(onlyB)}`,
     ).toBe(true);
   });
 
@@ -118,7 +118,7 @@ describe("config-sync whitelist completeness (nextile-nuny / nextile-eny3)", () 
     const names = new Set(mainKeys.map((k) => k.name));
     for (const key of INTERNAL_MAIN_KEYS) {
       expect(names.has(key), `INTERNAL_MAIN_KEYS lists '${key}' but it is not in the gschema`).toBe(
-        true
+        true,
       );
     }
   });
@@ -135,7 +135,7 @@ describe("config-sync whitelist completeness (nextile-nuny / nextile-eny3)", () 
       onlyA.length === 0 && onlyB.length === 0,
       `KEYBINDING_KEYS drifted from the gschema 'as' keys.\n` +
         `  In KEYBINDING_KEYS but not an 'as' gschema key: ${JSON.stringify(onlyA)}\n` +
-        `  'as' gschema keys missing from KEYBINDING_KEYS: ${JSON.stringify(onlyB)}`
+        `  'as' gschema keys missing from KEYBINDING_KEYS: ${JSON.stringify(onlyB)}`,
     ).toBe(true);
   });
 
@@ -151,7 +151,7 @@ describe("config-sync whitelist completeness (nextile-nuny / nextile-eny3)", () 
       onlyA.length === 0 && onlyB.length === 0,
       `KEYBINDING_STRING_KEYS drifted from the gschema string keys.\n` +
         `  In KEYBINDING_STRING_KEYS but not a string gschema key: ${JSON.stringify(onlyA)}\n` +
-        `  String gschema keys missing from KEYBINDING_STRING_KEYS: ${JSON.stringify(onlyB)}`
+        `  String gschema keys missing from KEYBINDING_STRING_KEYS: ${JSON.stringify(onlyB)}`,
     ).toBe(true);
   });
 });

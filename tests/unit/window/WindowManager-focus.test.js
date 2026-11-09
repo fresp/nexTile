@@ -61,7 +61,7 @@ describe("WindowManager - Pointer & Focus Management", () => {
             rect: new Rectangle({ x: 0, y: 0, width: 960, height: 1080 }),
             workspace: workspace0(),
           },
-        }
+        },
       );
       const { nodeWindow: nodeWindow2, metaWindow: metaWindow2 } = createWindowNode(
         ctx.tree,
@@ -71,7 +71,7 @@ describe("WindowManager - Pointer & Focus Management", () => {
             rect: new Rectangle({ x: 960, y: 0, width: 960, height: 1080 }),
             workspace: workspace0(),
           },
-        }
+        },
       );
 
       // Mock sortedWindows
@@ -127,7 +127,7 @@ describe("WindowManager - Pointer & Focus Management", () => {
             rect: new Rectangle({ x: 100, y: 100, width: 800, height: 800 }),
             workspace: workspace0(),
           },
-        }
+        },
       );
 
       // Mock sortedWindows (window2 is on top)
@@ -388,7 +388,7 @@ describe("WindowManager - Pointer & Focus Management", () => {
 
       expect(mockSeat.warp_pointer).toHaveBeenCalledWith(
         480, // x: 0 + 960/2
-        8 // y: 0 + 8 (titlebar)
+        8, // y: 0 + 8 (titlebar)
       );
     });
 
@@ -408,7 +408,7 @@ describe("WindowManager - Pointer & Focus Management", () => {
 
       expect(mockSeat.warp_pointer).toHaveBeenCalledWith(
         300, // x: 100 + 200
-        400 // y: 100 + 300
+        400, // y: 100 + 300
       );
     });
   });

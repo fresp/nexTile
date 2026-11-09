@@ -126,7 +126,7 @@ export function createHorizontalLayout(tree, parent, count, options = {}) {
         id: `win-h-${i}`,
         ...options.windowOverrides,
       },
-    })
+    }),
   );
 }
 
@@ -152,7 +152,7 @@ export function createVerticalLayout(tree, parent, count, options = {}) {
         id: `win-v-${i}`,
         ...options.windowOverrides,
       },
-    })
+    }),
   );
 }
 
@@ -175,7 +175,7 @@ export function createStackedLayout(tree, parent, count, options = {}) {
         id: `win-s-${i}`,
         ...options.windowOverrides,
       },
-    })
+    }),
   );
 }
 
@@ -198,7 +198,7 @@ export function createTabbedLayout(tree, parent, count, options = {}) {
         id: `win-t-${i}`,
         ...options.windowOverrides,
       },
-    })
+    }),
   );
 }
 

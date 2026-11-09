@@ -64,7 +64,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
     const { con, children } = buildSplit(
       LAYOUT_TYPES.HSPLIT,
       { x: 0, y: 0, width: 1800, height: 1080 },
-      [{ percent: 1 / 3, min_width: 900 }, { percent: 1 / 3 }, { percent: 1 / 3 }]
+      [{ percent: 1 / 3, min_width: 900 }, { percent: 1 / 3 }, { percent: 1 / 3 }],
     );
 
     const sizes = ctx.tree.computeSizes(con, children);
@@ -79,7 +79,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
     const { con, children } = buildSplit(
       LAYOUT_TYPES.HSPLIT,
       { x: 0, y: 0, width: 1800, height: 1080 },
-      [{ percent: 1 / 3, min_width: 800 }, { percent: 1 / 3, min_width: 700 }, { percent: 1 / 3 }]
+      [{ percent: 1 / 3, min_width: 800 }, { percent: 1 / 3, min_width: 700 }, { percent: 1 / 3 }],
     );
 
     const sizes = ctx.tree.computeSizes(con, children);
@@ -98,7 +98,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
         { percent: 1 / 3, min_width: 800 },
         { percent: 1 / 3, min_width: 800 },
         { percent: 1 / 3, min_width: 800 },
-      ]
+      ],
     );
 
     const sizes = ctx.tree.computeSizes(con, children);
@@ -114,7 +114,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
     const { con, children } = buildSplit(
       LAYOUT_TYPES.VSPLIT,
       { x: 0, y: 0, width: 960, height: 1080 },
-      [{ percent: 1 / 3, min_height: 700 }, { percent: 1 / 3 }, { percent: 1 / 3 }]
+      [{ percent: 1 / 3, min_height: 700 }, { percent: 1 / 3 }, { percent: 1 / 3 }],
     );
 
     const sizes = ctx.tree.computeSizes(con, children);
@@ -132,7 +132,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
     con.appendChild(conChild);
     const winChild = new Node(
       NODE_TYPES.WINDOW,
-      createMockWindow({ rect: new Rectangle({ width: 1800, height: 1080 }), size_hints: null })
+      createMockWindow({ rect: new Rectangle({ width: 1800, height: 1080 }), size_hints: null }),
     );
     winChild.percent = 0.5;
     con.appendChild(winChild);
@@ -164,7 +164,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
       createMockWindow({
         rect: new Rectangle({ width: 1800, height: 1080 }),
         size_hints: { min_width: 900, min_height: 0 },
-      })
+      }),
     );
     nestedWin.percent = 1;
     nested.appendChild(nestedWin);
@@ -172,7 +172,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
     // Child 1: a plain unconstrained window.
     const plain = new Node(
       NODE_TYPES.WINDOW,
-      createMockWindow({ rect: new Rectangle({ width: 1800, height: 1080 }), size_hints: null })
+      createMockWindow({ rect: new Rectangle({ width: 1800, height: 1080 }), size_hints: null }),
     );
     plain.percent = 0.75;
     con.appendChild(plain);
@@ -202,7 +202,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
           id: `n${i}`,
           rect: new Rectangle({ width: 1800, height: 1080 }),
           size_hints: { min_width, min_height: 0 },
-        })
+        }),
       );
       w.percent = 0.5;
       nested.appendChild(w);
@@ -210,7 +210,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
 
     const plain = new Node(
       NODE_TYPES.WINDOW,
-      createMockWindow({ rect: new Rectangle({ width: 1800, height: 1080 }), size_hints: null })
+      createMockWindow({ rect: new Rectangle({ width: 1800, height: 1080 }), size_hints: null }),
     );
     plain.percent = 0.9;
     con.appendChild(plain);
@@ -239,7 +239,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
           id: `v${i}`,
           rect: new Rectangle({ width: 1800, height: 1080 }),
           size_hints: { min_width, min_height: 0 },
-        })
+        }),
       );
       w.percent = 0.5;
       nested.appendChild(w);
@@ -247,7 +247,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
 
     const plain = new Node(
       NODE_TYPES.WINDOW,
-      createMockWindow({ rect: new Rectangle({ width: 1800, height: 1080 }), size_hints: null })
+      createMockWindow({ rect: new Rectangle({ width: 1800, height: 1080 }), size_hints: null }),
     );
     plain.percent = 0.9;
     con.appendChild(plain);
@@ -267,7 +267,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
         { percent: 1 / 3, min_width: 100 },
         { percent: 1 / 3, min_width: 100 },
         { percent: 1 / 3, min_width: 100 },
-      ]
+      ],
     );
 
     const sizes = ctx.tree.computeSizes(con, children);
@@ -283,7 +283,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
     const { con, children } = buildSplit(
       LAYOUT_TYPES.HSPLIT,
       { x: 0, y: 0, width: 1000, height: 1080 },
-      [{ percent: 0.7 }, { percent: 0.3 }]
+      [{ percent: 0.7 }, { percent: 0.3 }],
     );
 
     const sizes = ctx.tree.computeSizes(con, children);
@@ -297,7 +297,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
     const { con, children } = buildSplit(
       LAYOUT_TYPES.STACKED,
       { x: 0, y: 0, width: 960, height: 1080 },
-      [{ percent: 0.5, min_height: 900 }, { percent: 0.5 }]
+      [{ percent: 0.5, min_height: 900 }, { percent: 0.5 }],
     );
 
     const sizesWithHints = ctx.tree.computeSizes(con, children);
@@ -305,7 +305,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
     const { con: con2, children: children2 } = buildSplit(
       LAYOUT_TYPES.STACKED,
       { x: 0, y: 0, width: 960, height: 1080 },
-      [{ percent: 0.5 }, { percent: 0.5 }]
+      [{ percent: 0.5 }, { percent: 0.5 }],
     );
     const sizesNoHints = ctx.tree.computeSizes(con2, children2);
 
@@ -316,7 +316,7 @@ describe("nextile-s6g: minimum-size-aware tiling via redistribution", () => {
     const { con, children } = buildSplit(
       LAYOUT_TYPES.HSPLIT,
       { x: 0, y: 0, width: 1800, height: 1080 },
-      [{ percent: 1, min_width: 500 }]
+      [{ percent: 1, min_width: 500 }],
     );
 
     const sizes = ctx.tree.computeSizes(con, children);

@@ -70,7 +70,7 @@ describe("nextile-0zvq: focusing a window in a split member raises the whole spl
     const inner = con(LAYOUT_TYPES.TABBED, [win("a"), b]);
     inner.lastTabFocus = b.nodeValue;
     monitor.appendChild(
-      con(LAYOUT_TYPES.TABBED, [win("W1"), con(LAYOUT_TYPES.HSPLIT, [inner, W3])])
+      con(LAYOUT_TYPES.TABBED, [win("W1"), con(LAYOUT_TYPES.HSPLIT, [inner, W3])]),
     );
 
     focusManager.updateGroupFocus(W3);

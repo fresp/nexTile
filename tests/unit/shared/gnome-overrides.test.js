@@ -24,8 +24,8 @@ describe("shouldApplyOverride (nextile-9fo, nextile-abk)", () => {
     expect(
       shouldApplyOverride(
         edgeTiling,
-        settingsWith({ "disable-edge-tiling": true, "tiling-mode-enabled": true })
-      )
+        settingsWith({ "disable-edge-tiling": true, "tiling-mode-enabled": true }),
+      ),
     ).toBe(true);
   });
 
@@ -33,14 +33,14 @@ describe("shouldApplyOverride (nextile-9fo, nextile-abk)", () => {
     expect(
       shouldApplyOverride(
         edgeTiling,
-        settingsWith({ "disable-edge-tiling": true, "tiling-mode-enabled": false })
-      )
+        settingsWith({ "disable-edge-tiling": true, "tiling-mode-enabled": false }),
+      ),
     ).toBe(false);
     expect(
       shouldApplyOverride(
         edgeTiling,
-        settingsWith({ "disable-edge-tiling": false, "tiling-mode-enabled": true })
-      )
+        settingsWith({ "disable-edge-tiling": false, "tiling-mode-enabled": true }),
+      ),
     ).toBe(false);
   });
 

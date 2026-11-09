@@ -41,7 +41,7 @@ describe("Bug nextile-n0a7: middle child crosses monitors in the move direction"
       ctx.tree.createNode(
         leftMon.nodeValue,
         NODE_TYPES.WINDOW,
-        createMockWindow({ id, monitor: 0, workspace: ctx.workspaces[0] })
+        createMockWindow({ id, monitor: 0, workspace: ctx.workspaces[0] }),
       );
     const w1 = mk(1);
     const w2 = mk(2);
@@ -60,7 +60,7 @@ describe("Bug nextile-n0a7: middle child crosses monitors in the move direction"
     const a = ctx.tree.createNode(
       leftMon.nodeValue,
       NODE_TYPES.WINDOW,
-      createMockWindow({ id: 1, monitor: 0, workspace: ctx.workspaces[0] })
+      createMockWindow({ id: 1, monitor: 0, workspace: ctx.workspaces[0] }),
     );
     const con = ctx.tree.createNode(leftMon.nodeValue, NODE_TYPES.CON, null);
     con.layout = LAYOUT_TYPES.HSPLIT;
@@ -68,7 +68,7 @@ describe("Bug nextile-n0a7: middle child crosses monitors in the move direction"
       ctx.tree.createNode(
         con.nodeValue,
         NODE_TYPES.WINDOW,
-        createMockWindow({ id, monitor: 0, workspace: ctx.workspaces[0] })
+        createMockWindow({ id, monitor: 0, workspace: ctx.workspaces[0] }),
       );
     const b = mk(2);
     const c = mk(3);
@@ -92,7 +92,7 @@ describe("Bug nextile-n0a7: middle child crosses monitors in the move direction"
       ctx.tree.createNode(
         parent,
         NODE_TYPES.WINDOW,
-        createMockWindow({ id, monitor: 0, workspace: ctx.workspaces[0] })
+        createMockWindow({ id, monitor: 0, workspace: ctx.workspaces[0] }),
       );
     const a = mk(con.nodeValue, 1);
     const b = mk(con.nodeValue, 2);

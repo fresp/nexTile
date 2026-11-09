@@ -56,7 +56,7 @@ describe.skipIf(!hasTools)("nextile-fw33: make metadata serialises author identi
         "-q",
         "--allow-empty",
         "-m",
-        name
+        name,
       );
     }
     execFileSync("make", ["-s", "-f", MAKEFILE, "metadata"], { cwd: repo, env, stdio: "ignore" });
@@ -72,7 +72,7 @@ describe.skipIf(!hasTools)("nextile-fw33: make metadata serialises author identi
 
     expect(globalThis.PWN).toBeUndefined();
     expect([...developers].sort()).toEqual(
-      hostile.map(({ name, email }) => `${name} <${email}>`).sort()
+      hostile.map(({ name, email }) => `${name} <${email}>`).sort(),
     );
   });
 });

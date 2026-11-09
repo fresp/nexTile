@@ -235,7 +235,7 @@ describe("Bug: Workspace window movement - remaining windows should expand", () 
       tree.processNode(tree);
       const initialSizes = tree.computeSizes(
         monitor0Ws0,
-        tree.getTiledChildren(monitor0Ws0.childNodes)
+        tree.getTiledChildren(monitor0Ws0.childNodes),
       );
       // A=216px (20%), B=648px (60%), C=216px (20%)
       expect(initialSizes[0]).toBe(216); // A
@@ -259,7 +259,7 @@ describe("Bug: Workspace window movement - remaining windows should expand", () 
       // B=75% of 1080=810px, C=25% of 1080=270px
       const afterSizes = tree.computeSizes(
         monitor0Ws0,
-        tree.getTiledChildren(monitor0Ws0.childNodes)
+        tree.getTiledChildren(monitor0Ws0.childNodes),
       );
       expect(afterSizes.length).toBe(2);
       expect(afterSizes[0]).toBe(810); // B
@@ -305,7 +305,7 @@ describe("Bug: Workspace window movement - remaining windows should expand", () 
       // Each window should get 50% of width (960px)
       const afterSizes = tree.computeSizes(
         monitor0Ws0,
-        tree.getTiledChildren(monitor0Ws0.childNodes)
+        tree.getTiledChildren(monitor0Ws0.childNodes),
       );
       expect(afterSizes.length).toBe(2);
       expect(afterSizes[0]).toBe(960);

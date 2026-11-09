@@ -32,7 +32,7 @@ describe("WindowManager - sticky windows follow the active workspace", () => {
   const activate = (ws) => {
     ctx.workspaceManager.get_active_workspace_index.mockReturnValue(ws);
     ctx.workspaceManager.get_active_workspace.mockReturnValue(
-      ctx.workspaceManager.get_workspace_by_index(ws)
+      ctx.workspaceManager.get_workspace_by_index(ws),
     );
   };
 

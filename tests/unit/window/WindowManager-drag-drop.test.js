@@ -67,7 +67,7 @@ describe("WindowManager - Drag and Drop Tiling", () => {
       // target. Without this a RIGHT drop (same HSPLIT result) would pass too,
       // mirroring the dedicated "...after target when dropping right" test.
       const leftChildren = nodeWindow2.parentNode.childNodes.filter(
-        (c) => c.nodeType === NODE_TYPES.WINDOW
+        (c) => c.nodeType === NODE_TYPES.WINDOW,
       );
       expect(leftChildren.indexOf(nodeWindow2)).toBeLessThan(leftChildren.indexOf(nodeWindow1));
     });

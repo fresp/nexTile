@@ -66,7 +66,7 @@ describe("Bug nextile-y3jy: a stray '}' truncates the stylesheet and the write d
   it("still writes when the stylesheet parsed cleanly", () => {
     const { theme, file } = makeTheme(
       `.window-tiled-border { border-color: rgba(1,2,3,1); }
-.window-floated-border { border-color: rgba(4,5,6,1); }`
+.window-floated-border { border-color: rgba(4,5,6,1); }`,
     );
 
     const ok = theme.setCssProperty(".window-tiled-border", "border-color", "rgba(9,9,9,1)");

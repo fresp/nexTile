@@ -168,7 +168,7 @@ describe("DecorationManager tab/stack bar stacking (nextile-zhms)", () => {
     // sync_actor_stacking lowers each window actor to the bottom in turn,
     // leaving the bar on top of every window.
     [other, float, b, a].forEach((n) =>
-      ctx.windowGroup.set_child_below_sibling(n.windowActor, null)
+      ctx.windowGroup.set_child_below_sibling(n.windowActor, null),
     );
     expect(stack().at(-1)).toBe(con.decoration);
 

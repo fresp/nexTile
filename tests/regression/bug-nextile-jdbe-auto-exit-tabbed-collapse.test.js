@@ -40,7 +40,7 @@ describe("Bug nextile-jdbe: auto-exit-tabbed fires on nested-split collapse", ()
     const winC = ctx.tree.createNode(
       subCon.nodeValue,
       NODE_TYPES.WINDOW,
-      createMockWindow({ id: 1 })
+      createMockWindow({ id: 1 }),
     );
     winC.mode = WINDOW_MODES.TILE;
     ctx.tree.createNode(tabbed.nodeValue, NODE_TYPES.WINDOW, createMockWindow({ id: 2 })).mode =
