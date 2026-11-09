@@ -54,7 +54,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Credits
 
-- The contributors to the upstream tiling engine NexTile builds on
+- [Forge](https://extensions.gnome.org/extension/4481/forge/) (jmmaranan and contributors), the
+  GPL-3 tiling engine NexTile is forked from
 - Michael Stapelberg and contributors for i3
 - System76 and contributors for pop-shell
 - ReworkCSS and contributors for css-parse/css-stringify
