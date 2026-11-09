@@ -232,6 +232,16 @@
                 application was launched from.
             </description>
         </key>
+
+        <key type="b" name="launch-workspace-label">
+            <default>true</default>
+            <summary>Show the launched application's name in the top bar</summary>
+            <description>
+                On a workspace NexTile created for a launched application, show
+                that application's name beside the NexTile icon in the top bar.
+                Only shown while the tray icon is shown.
+            </description>
+        </key>
         <key type="b" name="preview-hint-enabled">
             <default>true</default>
             <summary>Whether to show preview hint DND</summary>

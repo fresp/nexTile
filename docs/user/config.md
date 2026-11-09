@@ -29,6 +29,7 @@ through `settings.json` like any other setting):
 | `launch-new-workspace-follow` | `false` | Switch to the new workspace after the window is moved into it. |
 | `launch-new-workspace-group-timeout` | `1000` | Milliseconds within which windows from the same application share one new workspace. `0` gives every window its own workspace. |
 | `launch-return-to-origin` | `true` | When the last window on a launched workspace closes, switch back to the workspace it was launched from. `workspace-return-origin` (no default shortcut) does the same on demand. |
+| `launch-workspace-label` | `true` | On a launched workspace, show the application's name beside the NexTile icon in the top bar. Needs the tray icon. |
 
 Windows that NexTile floats anyway — dialogs, transient windows, utility
 windows, always-on-visible-workspace pins, and windows matching a

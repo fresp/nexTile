@@ -383,6 +383,23 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
       expect(activeIndex).toBe(1);
     });
 
+    it("labels a launched workspace with its app until the workspace empties", () => {
+      const metaWindow = createMockWindow({ wm_class: "Chat", workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      const launched = ctx.workspaces[2];
+      expect(launch().labelFor(launched)).not.toBe("");
+      expect(launch().labelFor(ctx.workspaces[0])).toBe("");
+      close(metaWindow);
+      expect(launch().labelFor(launched)).toBe("");
+    });
+
+    it("hides labels when launch-workspace-label is off", () => {
+      ctx.settings.set_boolean("launch-workspace-label", false);
+      const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(launch().labelFor(ctx.workspaces[2])).toBe("");
+    });
+
     it("returns on demand through activateOrigin", () => {
       const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
       emitWindowCreated(metaWindow);

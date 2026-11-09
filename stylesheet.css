@@ -187,3 +187,8 @@
 .nextile-cheatsheet-desc {
   color: #d0cfcc;
 }
+
+.nextile-workspace-label {
+  padding-left: 4px;
+  font-weight: bold;
+}
