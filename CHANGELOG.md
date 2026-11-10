@@ -14,6 +14,13 @@ CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
   it. An existing `~/.config/nextile/config/windows.json` keeps its own rules:
   add `{ "wmTitle": "Picture in picture", "mode": "float" }` there, or reset the
   rules in Preferences.
+- **Edge's Document Picture-in-Picture window** (YouTube's automatic
+  picture-in-picture) is titled after the page, so the rule above did not match
+  it and it still tiled and moved to a new workspace. A default rule now floats
+  any Edge window whose title does not end in "Microsoft Edge"; this also floats
+  an undocked DevTools window. For an existing `windows.json`, add
+  `{ "wmClass": "microsoft-edge", "wmTitle": "!Microsoft Edge", "mode": "float" }`
+  (class `Microsoft-edge` on X11).
 
 ## [2026.11.2] — 2026-11-09
 
