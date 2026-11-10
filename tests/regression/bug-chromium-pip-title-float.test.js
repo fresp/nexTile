@@ -47,6 +47,49 @@ describe("the bundled windows.json floats a Chromium Picture-in-Picture window",
     expect(ctx.windowManager.launchWorkspace._shouldRelocate(pip)).toBe(false);
   });
 
+  // A Document Picture-in-Picture window (YouTube's auto-PiP) is a NORMAL,
+  // resizable window of the browser's class, titled after the page: unlike every
+  // browser window, its title does not carry the browser's name.
+  describe.each([
+    ["microsoft-edge", "Microsoft Edge"],
+    ["Microsoft-edge", "Microsoft Edge"],
+    ["google-chrome", "Google Chrome"],
+    ["Google-chrome", "Google Chrome"],
+    ["chromium", "Chromium"],
+    ["Chromium-browser", "Chromium"],
+    ["brave-browser", "Brave"],
+    ["Brave-browser", "Brave"],
+  ])("Document PiP of %s", (wmClass, browserName) => {
+    const documentPip = () =>
+      createMockWindow({
+        wm_class: wmClass,
+        title: "(275) Some video - YouTube",
+        window_type: WindowType.NORMAL,
+        allows_resize: true,
+      });
+
+    it("floats", () => {
+      expect(ctx.windowManager.isFloatingExempt(documentPip())).toBe(true);
+    });
+
+    it("is not moved to a new workspace", () => {
+      ctx.settings.set_boolean("launch-new-workspace-enabled", true);
+
+      expect(ctx.windowManager.launchWorkspace._shouldRelocate(documentPip())).toBe(false);
+    });
+
+    it("still tiles a browser window", () => {
+      const main = createMockWindow({
+        wm_class: wmClass,
+        title: `New Tab and 1 more page - Profile 1 - ${browserName}`,
+        window_type: WindowType.NORMAL,
+        allows_resize: true,
+      });
+
+      expect(ctx.windowManager.isFloatingExempt(main)).toBe(false);
+    });
+  });
+
   it("still tiles the browser's main window", () => {
     const main = createMockWindow({
       wm_class: "Microsoft-edge",

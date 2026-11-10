@@ -14,6 +14,13 @@ CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
   it. An existing `~/.config/nextile/config/windows.json` keeps its own rules:
   add `{ "wmTitle": "Picture in picture", "mode": "float" }` there, or reset the
   rules in Preferences.
+- **Document Picture-in-Picture in Edge, Chrome, Brave and Chromium**
+  (YouTube's automatic picture-in-picture). The window is titled after the page,
+  so the rule above did not match it and it still tiled and moved to a new
+  workspace. Default rules now float a window of these browsers whose title does
+  not contain the browser's name; this also floats an undocked DevTools window.
+  For an existing `windows.json`, copy the four `"wmTitle": "!…"` rules for
+  these browsers from the [default rules](config/windows.json).
 
 ## [2026.11.2] — 2026-11-09
 
