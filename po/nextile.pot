@@ -13,8 +13,9 @@ msgstr ""
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 #: lib/extension/cheatsheet.js
 msgid "Focus"
@@ -72,7 +73,7 @@ msgstr ""
 msgid "Workspace"
 msgstr ""
 
-#: lib/extension/cheatsheet.js lib/prefs/appearance.js
+#: lib/extension/cheatsheet.js
 msgid "Appearance"
 msgstr ""
 
@@ -84,7 +85,7 @@ msgstr ""
 msgid "Other"
 msgstr ""
 
-#: lib/extension/indicator.js lib/prefs/settings.js
+#: lib/extension/indicator.js
 msgid "Tiling"
 msgstr ""
 
@@ -130,6 +131,10 @@ msgstr ""
 
 #: lib/prefs/appearance.js
 msgid "Split direction hint"
+msgstr ""
+
+#: lib/prefs/appearance.js
+msgid "Look"
 msgstr ""
 
 #: lib/prefs/appearance.js
@@ -325,18 +330,30 @@ msgid "Border color"
 msgstr ""
 
 #: lib/prefs/floating.js
-msgid "Windows"
+msgid "Rules"
 msgstr ""
 
 #: lib/prefs/floating.js
+msgid "Refresh"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Open Windows"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Windows open right now. Pick one to float windows like it."
+msgstr ""
+
+#: lib/prefs/floating.js lib/prefs/workspaces.js
 msgid "Window Class"
 msgstr ""
 
-#: lib/prefs/floating.js
+#: lib/prefs/floating.js lib/prefs/workspaces.js
 msgid "Window Title (optional)"
 msgstr ""
 
-#: lib/prefs/floating.js
+#: lib/prefs/floating.js lib/prefs/workspaces.js
 msgid "Add"
 msgstr ""
 
@@ -366,8 +383,100 @@ msgstr ""
 msgid "Title-only rule"
 msgstr ""
 
+#: lib/prefs/floating.js
+msgid "The open windows are not available"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Turn NexTile on, or log out and back in after an update."
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "No open windows"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Untitled window"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Floating"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Tiled"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Float…"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Float Windows Like This"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Cancel"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Add Rule"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Every window of this app"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Windows of this app whose title contains"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Windows of this app whose title does not contain"
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Use plain text: a comma or a leading ! has a special meaning in a rule."
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Enter the text to look for."
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "This rule already exists."
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "This rule would not match this window."
+msgstr ""
+
+#: lib/prefs/floating.js
+msgid "Matches this window."
+msgstr ""
+
+#: lib/prefs/floating.js
+#, javascript-format
+msgid "Matches this window, but not the %d other open window of this app."
+msgid_plural ""
+"Matches this window, but not the %d other open windows of this app."
+msgstr[0] ""
+msgstr[1] ""
+
+#: lib/prefs/floating.js
+#, javascript-format
+msgid "Matches this window and the %d other open window of this app."
+msgid_plural "Matches this window and the %d other open windows of this app."
+msgstr[0] ""
+msgstr[1] ""
+
+#: lib/prefs/floating.js
+#, javascript-format
+msgid "Matches this window and %d of the %d other open windows of this app."
+msgstr ""
+
 #: lib/prefs/keyboard.js
-msgid "Keyboard"
+msgid "Shortcuts"
 msgstr ""
 
 #: lib/prefs/keyboard.js
@@ -405,14 +514,22 @@ msgid "None"
 msgstr ""
 
 #: lib/prefs/keyboard.js
-msgid "Shortcuts"
-msgstr ""
-
-#: lib/prefs/keyboard.js
 msgid ""
 "Change the tiling shortcuts. To clear a shortcut clear the input field. To "
 "apply a shortcut press enter. <a href=\"https://github.com/fresp/nextile/"
 "blob/main/docs/user/keybindings.md\">Keyboard shortcuts guide</a>"
+msgstr ""
+
+#: lib/prefs/keyboard.js
+msgid "Presets"
+msgstr ""
+
+#: lib/prefs/keyboard.js
+msgid ""
+"The default shortcuts stay as they are. The NexTile preset adds workspace "
+"shortcuts: Super+F monocle, Super+Backspace back to the origin workspace, "
+"Shift+Super+N launch-to-workspace on/off, Shift+Super+G golden ratio. "
+"Restore Defaults below removes them again."
 msgstr ""
 
 #: lib/prefs/keyboard.js
@@ -421,6 +538,22 @@ msgstr ""
 
 #: lib/prefs/keyboard.js
 msgid "Disable all shortcuts or restore default keybindings"
+msgstr ""
+
+#: lib/prefs/keyboard.js
+msgid "NexTile preset"
+msgstr ""
+
+#: lib/prefs/keyboard.js
+msgid "Workspace-centric shortcuts on top of the defaults"
+msgstr ""
+
+#: lib/prefs/keyboard.js
+msgid "Apply"
+msgstr ""
+
+#: lib/prefs/keyboard.js
+msgid "NexTile preset applied"
 msgstr ""
 
 #: lib/prefs/keyboard.js
@@ -456,7 +589,7 @@ msgid "Never"
 msgstr ""
 
 #: lib/prefs/portability.js
-msgid "Portability"
+msgid "Backup"
 msgstr ""
 
 #: lib/prefs/portability.js
@@ -614,6 +747,10 @@ msgid "About"
 msgstr ""
 
 #: lib/prefs/settings.js
+msgid "Layout"
+msgstr ""
+
+#: lib/prefs/settings.js
 msgid "Behavior"
 msgstr ""
 
@@ -715,34 +852,6 @@ msgid "Window's own monitor"
 msgstr ""
 
 #: lib/prefs/settings.js
-msgid "Launch windows into a new workspace"
-msgstr ""
-
-#: lib/prefs/settings.js
-msgid ""
-"Each newly launched window moves to a fresh workspace and is tiled there, "
-"leaving the current workspace untouched"
-msgstr ""
-
-#: lib/prefs/settings.js
-msgid "Follow launched windows"
-msgstr ""
-
-#: lib/prefs/settings.js
-msgid "Switch to the new workspace after a window is launched into it"
-msgstr ""
-
-#: lib/prefs/settings.js
-msgid "Launch grouping window"
-msgstr ""
-
-#: lib/prefs/settings.js
-msgid ""
-"Milliseconds within which windows from the same application share one new "
-"workspace (0 disables grouping)"
-msgstr ""
-
-#: lib/prefs/settings.js
 msgid "Drag-and-drop behavior"
 msgstr ""
 
@@ -756,19 +865,6 @@ msgstr ""
 
 #: lib/prefs/settings.js
 msgid "Makes floating windows appear above tiled windows"
-msgstr ""
-
-#: lib/prefs/settings.js
-msgid "Non-tiling workspaces"
-msgstr ""
-
-#: lib/prefs/settings.js
-msgid ""
-"Disables tiling on specified workspaces. Starts from 0, separated by commas"
-msgstr ""
-
-#: lib/prefs/settings.js
-msgid "Example: 0,1,2"
 msgstr ""
 
 #: lib/prefs/settings.js
@@ -789,7 +885,7 @@ msgid "Application Launcher"
 msgstr ""
 
 #: lib/prefs/settings.js
-msgid "Command to launch (shortcut configurable in Keyboard tab)"
+msgid "Command to launch (shortcut configurable on the Shortcuts page)"
 msgstr ""
 
 #: lib/prefs/settings.js
@@ -828,6 +924,115 @@ msgstr ""
 
 #: lib/prefs/widgets.js
 msgid "Invalid input"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "New workspace"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Current workspace"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+#, javascript-format
+msgid "Workspace %d"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Workspaces"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Launch placement"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Where a newly launched application window opens"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Launch windows into a new workspace"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid ""
+"Each newly launched window moves to a fresh workspace and is tiled there, "
+"leaving the current workspace untouched"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Follow launched windows"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Switch to the new workspace after a window is launched into it"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Launch grouping window"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid ""
+"Milliseconds within which windows from the same application share one new "
+"workspace (0 disables grouping)"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Return to origin on close"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid ""
+"When the last window on a launched workspace closes, switch back to the "
+"workspace it was launched from"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Show app name in the top bar"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid ""
+"On a launched workspace, show the application's name beside the NexTile icon "
+"(needs the tray icon)"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Opens on"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Per-app placement"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid ""
+"Choose where one application's new windows open. A rule applies even when "
+"launching into a new workspace is off. Use xprop WM_CLASS to find window "
+"class."
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Placement rules"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "The first rule that matches a window decides where it opens"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Non-tiling workspaces"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid ""
+"Disables tiling on specified workspaces. Starts from 0, separated by commas"
+msgstr ""
+
+#: lib/prefs/workspaces.js
+msgid "Example: 0,1,2"
 msgstr ""
 
 #: schemas/org.gnome.shell.extensions.nextile.gschema.xml
@@ -1004,6 +1209,28 @@ msgid ""
 "An application that opens several windows in quick succession (for example a "
 "session restore) gets one new workspace shared by all of those windows "
 "instead of one workspace per window. Set to 0 to disable grouping."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Return to the origin workspace when a launched workspace empties"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"When the last window on a workspace that NexTile created for a launched "
+"application closes, switch back to the workspace that application was "
+"launched from."
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Show the launched application's name in the top bar"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid ""
+"On a workspace NexTile created for a launched application, show that "
+"application's name beside the NexTile icon in the top bar. Only shown while "
+"the tray icon is shown."
 msgstr ""
 
 #: schemas/org.gnome.shell.extensions.nextile.gschema.xml
@@ -1268,6 +1495,14 @@ msgstr ""
 
 #: schemas/org.gnome.shell.extensions.nextile.gschema.xml
 msgid "Toggle monocle mode"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Return to the workspace the current one was launched from"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Turn launching windows into a new workspace on or off"
 msgstr ""
 
 #: schemas/org.gnome.shell.extensions.nextile.gschema.xml

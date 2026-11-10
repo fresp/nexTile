@@ -5,6 +5,16 @@ CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
 
 ## [Unreleased]
 
+### Added
+
+- **Float rules from an open window.** Preferences → Rules lists the windows
+  open right now. **Float…** on one makes a rule for every window of its app, or
+  for the app's windows whose title contains or does not contain a text, and
+  says which of the app's other open windows the rule would also float. No need
+  to look up a window's class and title first; this is how to float a browser's
+  Document Picture-in-Picture window (YouTube's automatic picture-in-picture),
+  which no default rule can tell apart from a browser window.
+
 ### Fixed
 
 - **Picture-in-Picture in Edge, Chrome, Brave and Chromium.** These browsers

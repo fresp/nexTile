@@ -6,6 +6,11 @@ apps.
 
 ## Adding a rule
 
+- **Preferences → Rules → Open Windows:** the windows open right now. Press
+  **Float…** on one and choose how far the rule reaches: every window of the app,
+  or the app's windows whose title contains (or does not contain) a text. The
+  dialog says which of the app's other open windows the rule would also float.
+  Useful for a window you cannot name, such as a browser's picture-in-picture.
 - **Preferences → Rules → Add Floating Window:** a class, optionally a title.
 - **`Super+c` / `Super+Shift+c`:** float or tile the focused window or its app; the
   toggle writes the rule.
@@ -46,7 +51,8 @@ Blender), `Super+Shift+c` adds a class `tile` rule, and pressing it again remove
 
 ## Finding a window's class
 
-Run `xprop WM_CLASS` and click the window; the class is the second string. On
+Preferences → Rules → Open Windows shows the class under each open window's title.
+Or run `xprop WM_CLASS` and click the window; the class is the second string. On
 Wayland use Looking Glass (`Alt+F2`, `lg`, Windows tab).
 
 NexTile floats a window while it reports no class. Some apps (Anki, the Opera Flatpak)
