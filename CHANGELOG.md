@@ -5,6 +5,16 @@ CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
 
 ## [Unreleased]
 
+### Added
+
+- **Float rules from an open window.** Preferences → Rules lists the windows
+  open right now. **Float…** on one makes a rule for every window of its app, or
+  for the app's windows whose title contains or does not contain a text, and
+  says which of the app's other open windows the rule would also float. No need
+  to look up a window's class and title first; this is how to float a browser's
+  Document Picture-in-Picture window (YouTube's automatic picture-in-picture),
+  which no default rule can tell apart from a browser window.
+
 ### Fixed
 
 - **Picture-in-Picture in Edge, Chrome, Brave and Chromium.** These browsers
@@ -14,13 +24,6 @@ CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
   it. An existing `~/.config/nextile/config/windows.json` keeps its own rules:
   add `{ "wmTitle": "Picture in picture", "mode": "float" }` there, or reset the
   rules in Preferences.
-- **Document Picture-in-Picture in Edge, Chrome, Brave and Chromium**
-  (YouTube's automatic picture-in-picture). The window is titled after the page,
-  so the rule above did not match it and it still tiled and moved to a new
-  workspace. Default rules now float a window of these browsers whose title does
-  not contain the browser's name; this also floats an undocked DevTools window.
-  For an existing `windows.json`, copy the four `"wmTitle": "!…"` rules for
-  these browsers from the [default rules](config/windows.json).
 
 ## [2026.11.2] — 2026-11-09
 

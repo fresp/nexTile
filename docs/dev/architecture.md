@@ -61,6 +61,7 @@ ROOT ─ WORKSPACE ─ MONITOR ─┬─ WINDOW
 | `keybindings.js` `Keybindings` | Registers shell keybindings → `CommandHandler`; drag modifier mask. |
 | `workspace.js` `WorkspaceManager` | Workspace nodes + per-workspace signal lifecycle + renumbering. |
 | `launch-workspace.js` `LaunchWorkspaceManager` | Launch → new workspace → auto-tile relocation (NexTile feature). |
+| `window-list.js` `WindowListService` | Answers the prefs Rules page's "which windows are open?" over D-Bus (see below). |
 | `monitor.js` `MonitorManager` | Monitor-per-workspace nodes; split orientation per monitor geometry. |
 | `cheatsheet.js` `Cheatsheet` | In-shell keybinding overlay (`Super+Shift+/`). |
 | `indicator.js` | Quick-settings panel toggle. |
@@ -143,6 +144,17 @@ crashes later.
   them ([rendering.md](rendering.md#rendertreefrom-force--windowjs)).
 
 [hazards.md](hazards.md) lists the guardrails that enforce this.
+
+## Extension → prefs: the open-window list
+
+Prefs runs in its own process and cannot enumerate windows. `WindowListService`
+exports `org.gnome.Shell.Extensions.NexTile` at `/org/gnome/Shell/Extensions/NexTile`
+on the shell's session-bus connection while NexTile is enabled; its `ListWindows`
+method returns the tracked windows (class, title, application name, floating) as JSON. The contract
+and the reply parser live in `lib/shared/window-list.js`.
+
+It is a request, not a GSettings mirror, so window titles are never written to dconf.
+Prefs → extension still goes through GSettings (`window-overrides-reload-trigger`).
 
 ## Configuration sources
 

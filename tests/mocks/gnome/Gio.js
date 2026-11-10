@@ -169,8 +169,43 @@ export const FileCopyFlags = {
   TARGET_DEFAULT_PERMS: 1 << 5,
 };
 
+// The session bus connection extensions export objects on.
+export const DBus = { session: { _name: "session-bus" } };
+
+// Gio.DBusExportedObject as GJS provides it: wrapJSObject() pairs an interface
+// with the JS object implementing it. Tests read `exports` to see what is live
+// on the bus and call the wrapped object's methods directly.
+export class DBusExportedObject {
+  static exports = new Map();
+
+  static wrapJSObject(interfaceXml, jsObject) {
+    return new DBusExportedObject(interfaceXml, jsObject);
+  }
+
+  constructor(interfaceXml, jsObject) {
+    this.interfaceXml = interfaceXml;
+    this.jsObject = jsObject;
+    this._path = null;
+  }
+
+  export(connection, path) {
+    if (DBusExportedObject.exports.has(path)) {
+      throw new Error(`An object is already exported at ${path}`);
+    }
+    this._path = path;
+    DBusExportedObject.exports.set(path, this);
+  }
+
+  unexport() {
+    if (this._path) DBusExportedObject.exports.delete(this._path);
+    this._path = null;
+  }
+}
+
 export default {
   File,
+  DBus,
+  DBusExportedObject,
   Settings,
   FileCreateFlags,
   FileCopyFlags,
