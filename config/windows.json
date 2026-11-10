@@ -26,8 +26,14 @@
       "mode": "float"
     },
     { "wmClass": "org.mozilla.firefox.desktop", "wmTitle": "!Mozilla Firefox", "mode": "float" },
-    { "wmClass": "microsoft-edge", "wmTitle": "!Microsoft Edge", "mode": "float" },
-    { "wmClass": "Microsoft-edge", "wmTitle": "!Microsoft Edge", "mode": "float" },
+    { "wmClass": "microsoft-edge,Microsoft-edge", "wmTitle": "!Microsoft Edge", "mode": "float" },
+    { "wmClass": "google-chrome,Google-chrome", "wmTitle": "!Google Chrome", "mode": "float" },
+    {
+      "wmClass": "chromium,Chromium,chromium-browser,Chromium-browser",
+      "wmTitle": "!Chromium",
+      "mode": "float"
+    },
+    { "wmClass": "brave-browser,Brave-browser", "wmTitle": "!Brave", "mode": "float" },
     { "wmClass": "thunderbird", "wmTitle": "About Mozilla Thunderbird", "mode": "float" },
     { "wmClass": "thunderbird", "wmTitle": "!Mozilla Thunderbird", "mode": "float" },
     {
