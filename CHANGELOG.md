@@ -3,6 +3,18 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); tags are
 CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
 
+## [Unreleased]
+
+### Fixed
+
+- **Picture-in-Picture in Edge, Chrome, Brave and Chromium.** These browsers
+  title the window "Picture in picture", which the default rule for Firefox's
+  "Picture-in-Picture" did not match, so the window tiled and, with launching
+  into a new workspace on, moved to a new workspace. A default rule now floats
+  it. An existing `~/.config/nextile/config/windows.json` keeps its own rules:
+  add `{ "wmTitle": "Picture in picture", "mode": "float" }` there, or reset the
+  rules in Preferences.
+
 ## [2026.11.2] — 2026-11-09
 
 The first release that publishes a download. The release workflow failed for

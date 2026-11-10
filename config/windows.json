@@ -101,6 +101,10 @@
     {
       "wmTitle": "Picture-in-Picture",
       "mode": "float"
+    },
+    {
+      "wmTitle": "Picture in picture",
+      "mode": "float"
     }
   ]
 }
