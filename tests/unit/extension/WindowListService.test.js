@@ -46,8 +46,27 @@ describe("WindowListService", () => {
       track({ wm_class: "microsoft-edge", title: "Some video - YouTube" }, WINDOW_MODES.FLOAT);
 
       expect(service().listWindows()).toEqual([
-        { wmClass: "microsoft-edge", title: "New Tab - Microsoft Edge", floating: false },
-        { wmClass: "microsoft-edge", title: "Some video - YouTube", floating: true },
+        {
+          wmClass: "microsoft-edge",
+          title: "New Tab - Microsoft Edge",
+          appName: "Mock App",
+          floating: false,
+        },
+        {
+          wmClass: "microsoft-edge",
+          title: "Some video - YouTube",
+          appName: "Mock App",
+          floating: true,
+        },
+      ]);
+    });
+
+    it("lists an app-less window under an empty application name", () => {
+      const metaWindow = track({ wm_class: "foot", title: "t" });
+      ctx.tree.findNode(metaWindow).app = null;
+
+      expect(service().listWindows()).toEqual([
+        { wmClass: "foot", title: "t", appName: "", floating: false },
       ]);
     });
 
@@ -66,7 +85,9 @@ describe("WindowListService", () => {
     it("lists a window with no title under an empty one", () => {
       track({ wm_class: "foot", title: null });
 
-      expect(service().listWindows()).toEqual([{ wmClass: "foot", title: "", floating: false }]);
+      expect(service().listWindows()).toEqual([
+        { wmClass: "foot", title: "", appName: "Mock App", floating: false },
+      ]);
     });
 
     it("skips a window finalized before its node was removed", () => {
@@ -77,7 +98,7 @@ describe("WindowListService", () => {
       track({ wm_class: "foot", title: "alive" });
 
       expect(service().listWindows()).toEqual([
-        { wmClass: "foot", title: "alive", floating: false },
+        { wmClass: "foot", title: "alive", appName: "Mock App", floating: false },
       ]);
     });
   });
@@ -112,7 +133,7 @@ describe("WindowListService", () => {
       track({ wm_class: "foot", title: 'a "quoted" title' });
 
       expect(parseWindowList(service().ListWindows())).toEqual([
-        { wmClass: "foot", title: 'a "quoted" title', floating: false },
+        { wmClass: "foot", title: 'a "quoted" title', appName: "Mock App", floating: false },
       ]);
     });
   });
@@ -131,9 +152,13 @@ describe("parseWindowList", () => {
       "foot",
       { wmClass: "", title: "no class" },
       { wmClass: "foot" },
-      { wmClass: "foot", title: "ok", floating: "yes", extra: 1 },
+      { wmClass: "foot", title: "ok", floating: "yes", appName: 3, extra: 1 },
+      { wmClass: "foot", title: "ok", floating: true, appName: "Foot" },
     ]);
 
-    expect(parseWindowList(reply)).toEqual([{ wmClass: "foot", title: "ok", floating: false }]);
+    expect(parseWindowList(reply)).toEqual([
+      { wmClass: "foot", title: "ok", appName: "", floating: false },
+      { wmClass: "foot", title: "ok", appName: "Foot", floating: true },
+    ]);
   });
 });

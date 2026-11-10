@@ -150,7 +150,7 @@ crashes later.
 Prefs runs in its own process and cannot enumerate windows. `WindowListService`
 exports `org.gnome.Shell.Extensions.NexTile` at `/org/gnome/Shell/Extensions/NexTile`
 on the shell's session-bus connection while NexTile is enabled; its `ListWindows`
-method returns the tracked windows (class, title, floating) as JSON. The contract
+method returns the tracked windows (class, title, application name, floating) as JSON. The contract
 and the reply parser live in `lib/shared/window-list.js`.
 
 It is a request, not a GSettings mirror, so window titles are never written to dconf.
