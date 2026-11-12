@@ -14,6 +14,7 @@ Focus also accepts the arrow keys.
 | Swap in a direction | `Ctrl+Super+h/j/k/l` |
 | Move in a direction | `Super+Shift+h/j/k/l` |
 | Float this window / this app | `Super+c` / `Super+Shift+c` |
+| [Scratchpad](layouts.md#scratchpad): show or hide / send the window there | `Super+-` / `Super+Shift+-` |
 | Toggle split direction | `Super+g` |
 | Split vertically / horizontally | `Super+v` / `Super+z` |
 | Stacked / tabbed layout | `Super+Shift+s` / `Super+Shift+t` |

@@ -1502,6 +1502,14 @@ msgid "Return to the workspace the current one was launched from"
 msgstr ""
 
 #: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Move window to the scratchpad"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
+msgid "Show or hide a scratchpad window"
+msgstr ""
+
+#: schemas/org.gnome.shell.extensions.nextile.gschema.xml
 msgid "Turn launching windows into a new workspace on or off"
 msgstr ""
 

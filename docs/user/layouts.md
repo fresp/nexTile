@@ -53,6 +53,25 @@ as is. `Super+=` evens them out again. Unbound by default (`window-golden-ratio`
 window keeps its place in the tree and returns there when tiled again. Some windows
 float automatically; [window rules](rules.md) control which.
 
+## Scratchpad
+
+The scratchpad keeps windows out of sight until you ask for them, as in i3 and
+sway: a terminal, a music player, notes.
+
+- `Super+Shift+-` sends the focused window to the scratchpad. It becomes a
+  floating window and disappears.
+- `Super+-` shows a scratchpad window on the current workspace and monitor.
+  Pressed while that window has the focus, it hides it again. With several
+  windows in the scratchpad, each press shows the one hidden the longest. A
+  scratchpad window left showing on another workspace is brought over first.
+- `Super+c` on a scratchpad window takes it out of the scratchpad and tiles it.
+
+A hidden window is minimized and set to show on all workspaces, so it does not
+keep an empty workspace open. It therefore still appears, as a minimized
+window, in `Alt+Tab` and the overview; picking it there shows it. The scratchpad
+is not saved: after you log out, or disable NexTile, its windows are ordinary
+windows again, and the hidden ones stay minimized.
+
 ## Drag to tile
 
 Drag a window over another and a preview shows where it will land (left, right, top,
