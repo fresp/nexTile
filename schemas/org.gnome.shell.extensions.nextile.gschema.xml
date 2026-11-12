@@ -581,6 +581,16 @@
             <summary>Return to the workspace the current one was launched from</summary>
         </key>
 
+        <key type="as" name="window-move-scratchpad">
+            <default><![CDATA[['<Shift><Super>minus']]]></default>
+            <summary>Move window to the scratchpad</summary>
+        </key>
+
+        <key type="as" name="scratchpad-show">
+            <default><![CDATA[['<Super>minus']]]></default>
+            <summary>Show or hide a scratchpad window</summary>
+        </key>
+
         <key type="as" name="prefs-launch-workspace-toggle">
             <default><![CDATA[[]]]></default>
             <summary>Turn launching windows into a new workspace on or off</summary>

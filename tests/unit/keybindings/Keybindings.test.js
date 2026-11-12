@@ -86,6 +86,8 @@ describe("Keybindings", () => {
         "window-pointer-to-focus",
         "workspace-monocle-toggle",
         "workspace-return-origin",
+        "window-move-scratchpad",
+        "scratchpad-show",
         "prefs-launch-workspace-toggle",
         "window-expand",
         "window-shrink",

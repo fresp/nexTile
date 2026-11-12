@@ -61,6 +61,7 @@ ROOT ─ WORKSPACE ─ MONITOR ─┬─ WINDOW
 | `keybindings.js` `Keybindings` | Registers shell keybindings → `CommandHandler`; drag modifier mask. |
 | `workspace.js` `WorkspaceManager` | Workspace nodes + per-workspace signal lifecycle + renumbering. |
 | `launch-workspace.js` `LaunchWorkspaceManager` | Launch → new workspace → auto-tile relocation (NexTile feature). |
+| `scratchpad.js` `ScratchpadManager` | The scratchpad's members: floating windows hidden by minimizing them, sticky while hidden. |
 | `window-list.js` `WindowListService` | Answers the prefs Rules page's "which windows are open?" over D-Bus (see below). |
 | `monitor.js` `MonitorManager` | Monitor-per-workspace nodes; split orientation per monitor geometry. |
 | `cheatsheet.js` `Cheatsheet` | In-shell keybinding overlay (`Super+Shift+/`). |

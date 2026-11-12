@@ -238,6 +238,14 @@
           "$ref": "#/definitions/keybinding",
           "description": "Return to the workspace the current launched workspace came from"
         },
+        "window-move-scratchpad": {
+          "$ref": "#/definitions/keybinding",
+          "description": "Move the focused window to the scratchpad"
+        },
+        "scratchpad-show": {
+          "$ref": "#/definitions/keybinding",
+          "description": "Show the next scratchpad window, or hide the focused one"
+        },
         "prefs-launch-workspace-toggle": {
           "$ref": "#/definitions/keybinding",
           "description": "Turn launching windows into a new workspace on or off"
