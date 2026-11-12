@@ -17,6 +17,11 @@ CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
 
 ### Fixed
 
+- **Returning to the origin with a sticky window open.** A window set to
+  "Always on Visible Workspace", or any window on a secondary monitor with
+  workspaces on the primary only, counted as a window on the launched
+  workspace, so closing that workspace's last window did not switch back.
+
 - **Picture-in-Picture in Edge, Chrome, Brave and Chromium.** These browsers
   title the window "Picture in picture", which the default rule for Firefox's
   "Picture-in-Picture" did not match, so the window tiled and, with launching

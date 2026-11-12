@@ -364,6 +364,19 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
       expect(activeIndex).toBe(2);
     });
 
+    it("goes back when only a sticky window is left on the launched workspace", () => {
+      const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      expect(activeIndex).toBe(2);
+      // Shown on every workspace, so its node sits under the active one.
+      const sticky = createMockWindow({ workspace: ctx.workspaces[2] });
+      sticky.stick();
+      emitWindowCreated(sticky);
+      expect(ctx.tree.findNode("ws2").contains(ctx.tree.findNode(sticky))).toBe(true);
+      close(metaWindow);
+      expect(activeIndex).toBe(0);
+    });
+
     it("stays when the setting is off", () => {
       ctx.settings.set_boolean("launch-return-to-origin", false);
       const metaWindow = createMockWindow({ workspace: ctx.workspaces[0] });
