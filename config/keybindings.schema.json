@@ -238,7 +238,7 @@
           "$ref": "#/definitions/keybinding",
           "description": "Return to the workspace the current launched workspace came from"
         },
-        "window-move-scratchpad": {
+        "scratchpad-move": {
           "$ref": "#/definitions/keybinding",
           "description": "Move the focused window to the scratchpad"
         },

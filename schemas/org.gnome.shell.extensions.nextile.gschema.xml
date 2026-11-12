@@ -581,7 +581,7 @@
             <summary>Return to the workspace the current one was launched from</summary>
         </key>
 
-        <key type="as" name="window-move-scratchpad">
+        <key type="as" name="scratchpad-move">
             <default><![CDATA[['<Shift><Super>minus']]]></default>
             <summary>Move window to the scratchpad</summary>
         </key>
