@@ -65,6 +65,8 @@ sway: a terminal, a music player, notes.
   windows in the scratchpad, each press shows the one hidden the longest. A
   scratchpad window left showing on another workspace is brought over first.
 - `Super+c` on a scratchpad window takes it out of the scratchpad and tiles it.
+- A [per-app placement rule](config.md#per-app-placement) can start an
+  application's windows in the scratchpad.
 
 A hidden window is minimized and set to show on all workspaces, so it does not
 keep an empty workspace open. It therefore still appears, as a minimized

@@ -48,6 +48,7 @@ rule wins:
   "launchRules": [
     { "wmClass": "org.gnome.TextEditor", "workspace": "current" },
     { "wmClass": "Slack", "workspace": 2 },
+    { "wmClass": "org.gnome.Console", "workspace": "scratchpad" },
     { "wmClass": "Microsoft-edge", "wmTitle": "Outlook", "workspace": "new" }
   ]
 }
@@ -57,6 +58,7 @@ rule wins:
 | --- | --- |
 | `"new"` | A fresh workspace, as the global switch does. |
 | `"current"` | Stay on the active workspace and tile there. |
+| `"scratchpad"` | Go to the [scratchpad](layouts.md#scratchpad): the window opens, then hides as soon as it has drawn. |
 | a number | That workspace, counted from 1. If it does not exist yet, a new one at the end. |
 
 `wmClass` and `wmTitle` match the same way as in [float rules](rules.md). Windows

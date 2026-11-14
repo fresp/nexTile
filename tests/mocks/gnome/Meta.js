@@ -147,28 +147,33 @@ export class Window extends withSignals() {
     return this._on_all_workspaces;
   }
 
-  // nextile-16ms: the user-requested "Always on Visible Workspace" pin, distinct from
-  // the EFFECTIVE sticky state Mutter sets implicitly for a non-primary-monitor
-  // window under workspaces-only-on-primary=true.
+  // meta_window_is_always_on_all_workspaces(): Mutter's always_sticky flag, set by
+  // window TYPE (desktop, dock). stick() does not set it, so it is NOT the user's
+  // "Always on Visible Workspace" pin; Mutter exposes no getter for that.
   is_always_on_all_workspaces() {
     return this._always_on_all_workspaces;
   }
 
-  // Test helper: pin/unpin "Always on Visible Workspace" — a USER pin sets both the
-  // requested flag and the effective state. nextile-yyum.
+  // meta_window_is_on_primary_monitor(). An implicitly sticky window is by
+  // definition on a non-primary monitor (see stickImplicit).
+  is_on_primary_monitor() {
+    return !this._implicit_sticky;
+  }
+
+  // meta_window_stick() / unstick(): the user's "Always on Visible Workspace"
+  // pin. They change only the effective state (nextile-yyum).
   stick() {
     this._on_all_workspaces = true;
-    this._always_on_all_workspaces = true;
   }
 
   unstick() {
-    this._on_all_workspaces = false;
-    this._always_on_all_workspaces = false;
+    this._on_all_workspaces = this._implicit_sticky === true;
   }
 
   // nextile-16ms: Mutter's IMPLICIT stickiness for a window on a non-primary monitor
-  // under workspaces-only-on-primary=true — effective sticky with NO user pin.
+  // under workspaces-only-on-primary=true: effective sticky with NO user pin.
   stickImplicit() {
+    this._implicit_sticky = true;
     this._on_all_workspaces = true;
   }
 
@@ -502,6 +507,15 @@ export function external_binding_name_for_action(action) {
 
 // Module-level Wayland flag (default false) so tests can exercise the Wayland
 // buffer-scale paths that production guards behind is_wayland_compositor().
+// meta_prefs_get_workspaces_only_on_primary(). GNOME's session default is true.
+let _workspacesOnlyOnPrimary = true;
+export function prefs_get_workspaces_only_on_primary() {
+  return _workspacesOnlyOnPrimary;
+}
+export function __setWorkspacesOnlyOnPrimary(value) {
+  _workspacesOnlyOnPrimary = value;
+}
+
 let _wayland = false;
 export function is_wayland_compositor() {
   return _wayland;
@@ -527,4 +541,6 @@ export default {
   external_binding_name_for_action,
   is_wayland_compositor,
   __setWayland,
+  prefs_get_workspaces_only_on_primary,
+  __setWorkspacesOnlyOnPrimary,
 };

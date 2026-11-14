@@ -31,6 +31,8 @@ const INTERNAL_MAIN_KEYS = [
   "config-last-export",
   "config-sync-mtimes",
   "config-file-sync-enabled",
+  // A per-machine security opt-in: importing a config must not turn it on.
+  "external-control-enabled",
 ];
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");

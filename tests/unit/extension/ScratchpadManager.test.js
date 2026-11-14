@@ -113,8 +113,8 @@ describe("Scratchpad", () => {
       // meta_window_is_always_on_all_workspaces() is the window-type flag, which
       // stick() never sets.
       const { metaWindow } = addWindow();
-      metaWindow.is_always_on_all_workspaces = () => false;
       send(metaWindow);
+      expect(metaWindow.is_always_on_all_workspaces()).toBe(false);
       expect(metaWindow.is_on_all_workspaces()).toBe(true);
       wm().command(SHOW);
       expect(metaWindow.is_on_all_workspaces()).toBe(false);

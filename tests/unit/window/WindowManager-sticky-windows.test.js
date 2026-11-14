@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { LAYOUT_TYPES, NODE_TYPES } from "../../../lib/extension/tree.js";
+import { WINDOW_MODES } from "../../../lib/extension/window.js";
 import {
   createContainerNode,
   createWindowManagerFixture,
@@ -102,6 +103,24 @@ describe("WindowManager - sticky windows follow the active workspace", () => {
     // The arrival gets a fair share of the target, not the share it had of the source.
     expect(target.childNodes.map((n) => n.percent)).toEqual([0.5, 0.5]);
     expect(stray.childNodes).toHaveLength(0);
+  });
+
+  it("does not rebalance the windows a floating sticky window leaves behind", () => {
+    setup({ activeWs: 1 });
+    const home = mon(1, 0);
+    const stayed = addWindow(home, 1, { sticky: false, monitor: 1, ws: 0 });
+    const pinned = addWindow(home, 2, { monitor: 1 });
+    const [stayedNode, pinnedNode] = home.childNodes;
+    pinnedNode.mode = WINDOW_MODES.FLOAT;
+    expect(stayedNode.percent).toBe(0);
+
+    wm()._rehomeStickyWindows();
+
+    expect(windowsOf(mon(1, 1))).toEqual([pinned]);
+    expect(windowsOf(home)).toEqual([stayed]);
+    // Unset, as before: back on this workspace and tiled again, the pinned window
+    // shares it equally instead of getting a third.
+    expect(stayedNode.percent).toBe(0);
   });
 
   it("leaves a moving window that is not sticky to the idle reconcile", () => {

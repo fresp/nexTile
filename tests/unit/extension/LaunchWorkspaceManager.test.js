@@ -120,7 +120,7 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
 
     it("does not relocate sticky (all-workspaces) windows", () => {
       const sticky = createMockWindow({
-        always_on_all_workspaces: true,
+        on_all_workspaces: true,
         workspace: ctx.workspaces[0],
       });
       emitWindowCreated(sticky);
@@ -249,6 +249,73 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
       emitWindowCreated(metaWindow);
       expect(ctx.workspaceManager.get_n_workspaces()).toBe(2);
       expect(metaWindow.get_workspace()).toBe(ctx.workspaces[0]);
+    });
+
+    /** Emit window-created; returns the actor's "first-frame" handler. */
+    const createAndGetFirstFrame = (metaWindow) => {
+      let firstFrame = () => {};
+      vi.spyOn(metaWindow.get_compositor_private(), "connect").mockImplementation((signal, cb) => {
+        if (signal === "first-frame") firstFrame = cb;
+        return 1;
+      });
+      emitWindowCreated(metaWindow);
+      return firstFrame;
+    };
+
+    it("hides a 'scratchpad' rule's window once it has painted its first frame", () => {
+      ctx.settings.set_boolean("launch-new-workspace-enabled", false);
+      withRules([{ wmClass: "Notes", workspace: "scratchpad" }]);
+      const metaWindow = createMockWindow({ wm_class: "Notes", workspace: ctx.workspaces[0] });
+      const firstFrame = createAndGetFirstFrame(metaWindow);
+
+      // A member already, so it is tracked floating; still showing until painted.
+      expect(wm().scratchpad.has(metaWindow)).toBe(true);
+      expect(ctx.tree.findNode(metaWindow).mode).toBe(WINDOW_MODES.FLOAT);
+      expect(metaWindow.minimized).toBe(false);
+
+      firstFrame();
+
+      expect(metaWindow.minimized).toBe(true);
+      expect(metaWindow.is_on_all_workspaces()).toBe(true);
+      expect(metaWindow.nextileAwaitingFirstFrame).toBe(false);
+      expect(ctx.workspaceManager.get_n_workspaces()).toBe(2);
+    });
+
+    it("hides it only once: a later first frame leaves a shown window alone", () => {
+      withRules([{ wmClass: "Notes", workspace: "scratchpad" }]);
+      const metaWindow = createMockWindow({ wm_class: "Notes", workspace: ctx.workspaces[0] });
+      const firstFrame = createAndGetFirstFrame(metaWindow);
+      firstFrame();
+      wm().scratchpad.show(metaWindow);
+
+      firstFrame();
+      emitWindowCreated(metaWindow);
+
+      expect(metaWindow.minimized).toBe(false);
+    });
+
+    it("does not hide a window that left the scratchpad before it painted", () => {
+      withRules([{ wmClass: "Notes", workspace: "scratchpad" }]);
+      const metaWindow = createMockWindow({ wm_class: "Notes", workspace: ctx.workspaces[0] });
+      const firstFrame = createAndGetFirstFrame(metaWindow);
+      wm().scratchpad.release(metaWindow);
+
+      firstFrame();
+
+      expect(metaWindow.minimized).toBe(false);
+    });
+
+    it("leaves a window that floats out of the scratchpad", () => {
+      withRules([{ wmClass: "Notes", workspace: "scratchpad" }]);
+      const dialog = createMockWindow({
+        wm_class: "Notes",
+        window_type: WindowType.DIALOG,
+        workspace: ctx.workspaces[0],
+      });
+      const firstFrame = createAndGetFirstFrame(dialog);
+      firstFrame();
+      expect(wm().scratchpad.has(dialog)).toBe(false);
+      expect(dialog.minimized).toBe(false);
     });
 
     it("moves a numbered rule's window to that workspace without appending one", () => {

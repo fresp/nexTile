@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { MaximizeFlags, Window } from "../../mocks/gnome/Meta.js";
+import { MaximizeFlags, Window, __setWorkspacesOnlyOnPrimary } from "../../mocks/gnome/Meta.js";
 
 // Compat dispatches on IS_MUTTER_49_PLUS which is computed from
 // PACKAGE_VERSION at module load. tests/setup.js mocks that resource
@@ -344,4 +344,49 @@ describe("isFixedSize", () => {
       expect(Compat.isFixedSize(window)).toBe(true);
     },
   );
+});
+
+describe("isPinnedToAllWorkspaces", () => {
+  let Compat;
+  beforeEach(async () => {
+    Compat = await loadCompat("47.0");
+  });
+  afterEach(() => {
+    __setWorkspacesOnlyOnPrimary(true);
+  });
+
+  it("is false for a window on one workspace", () => {
+    expect(Compat.isPinnedToAllWorkspaces(new Window())).toBe(false);
+  });
+
+  it("is true for a window the user stuck, which Mutter does not flag always sticky", () => {
+    const pinned = new Window();
+    pinned.stick();
+    expect(pinned.is_always_on_all_workspaces()).toBe(false);
+    expect(Compat.isPinnedToAllWorkspaces(pinned)).toBe(true);
+    pinned.unstick();
+    expect(Compat.isPinnedToAllWorkspaces(pinned)).toBe(false);
+  });
+
+  it("is false for a window that is only sticky for being on a non-primary monitor", () => {
+    const implicit = new Window();
+    implicit.stickImplicit();
+    expect(implicit.is_on_all_workspaces()).toBe(true);
+    expect(Compat.isPinnedToAllWorkspaces(implicit)).toBe(false);
+  });
+
+  it("cannot see a pin on a non-primary monitor while workspaces are primary-only", () => {
+    const both = new Window();
+    both.stickImplicit();
+    both.stick();
+    expect(Compat.isPinnedToAllWorkspaces(both)).toBe(false);
+  });
+
+  it("is true for any sticky window when workspaces span every monitor", () => {
+    __setWorkspacesOnlyOnPrimary(false);
+    const offPrimary = new Window();
+    offPrimary.is_on_primary_monitor = () => false;
+    offPrimary.stick();
+    expect(Compat.isPinnedToAllWorkspaces(offPrimary)).toBe(true);
+  });
 });

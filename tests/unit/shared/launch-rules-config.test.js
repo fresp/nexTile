@@ -22,6 +22,7 @@ describe("windows.json launchRules", () => {
       { wmClass: "Chat", workspace: "new" },
       { wmClass: "Editor", wmTitle: "notes", workspace: "current" },
       { wmClass: "Mail", workspace: 3 },
+      { wmClass: "Notes", workspace: "scratchpad" },
     ];
     const bad = [
       null,

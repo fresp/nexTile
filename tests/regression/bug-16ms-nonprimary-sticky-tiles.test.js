@@ -11,9 +11,8 @@ import { createMockWindow, createWindowManagerFixture } from "../mocks/helpers/i
  * so is_on_all_workspaces() was true and processFloats float-ejected every new or
  * moved window on a secondary monitor.
  *
- * Fix: test the user PIN via Compat.isAlwaysOnAllWorkspaces
- * (is_always_on_all_workspaces), which is false for the implicit case and true
- * only for a real "Always on Visible Workspace" pin.
+ * Fix: test the user PIN via Compat.isPinnedToAllWorkspaces, which is false for
+ * the implicit case and true for a real "Always on Visible Workspace" pin.
  */
 describe("nextile-16ms: implicit non-primary stickiness still tiles", () => {
   let ctx;
@@ -39,8 +38,9 @@ describe("nextile-16ms: implicit non-primary stickiness still tiles", () => {
 
   it("still floats a window the user actually pinned Always-on-Visible-Workspace", () => {
     const pinned = createMockWindow({ wm_class: "App", title: "Doc" });
-    pinned.stick(); // user pin: sets both the requested flag and effective state
-    expect(pinned.is_always_on_all_workspaces()).toBe(true);
+    pinned.stick();
+    // The pin is not Mutter's always_sticky flag (window type: desktop, dock).
+    expect(pinned.is_always_on_all_workspaces()).toBe(false);
     expect(wm().isFloatingExempt(pinned)).toBe(true);
   });
 });

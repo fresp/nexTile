@@ -53,10 +53,10 @@
           },
           "workspace": {
             "oneOf": [
-              { "type": "string", "enum": ["new", "current"] },
+              { "type": "string", "enum": ["new", "current", "scratchpad"] },
               { "type": "integer", "minimum": 1 }
             ],
-            "description": "new = a fresh workspace, current = stay on the active workspace, a number = that workspace counted from 1 (a new workspace when it does not exist yet)"
+            "description": "new = a fresh workspace, current = stay on the active workspace, scratchpad = start hidden in the scratchpad, a number = that workspace counted from 1 (a new workspace when it does not exist yet)"
           }
         },
         "additionalProperties": false

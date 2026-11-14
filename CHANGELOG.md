@@ -7,10 +7,17 @@ CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
 
 ### Added
 
+- **Control from other programs.** With Preferences → Layout → External control
+  turned on, scripts, gesture tools and launchers can run any NexTile action by
+  its keybinding key and read a little state over D-Bus, as `i3-msg` does for
+  i3. Off by default. See [external control](docs/user/external-control.md).
+
 - **Scratchpad.** `Super+Shift+-` sends the focused window to the scratchpad:
   it floats and is hidden. `Super+-` shows a scratchpad window on the current
   workspace, hides it again when it has the focus, and cycles when there are
-  several. `Super+c` takes a window back out and tiles it. See
+  several. `Super+c` takes a window back out and tiles it. A per-app placement
+  rule with `"workspace": "scratchpad"` (Preferences → Workspaces, or
+  `windows.json`) starts an application's windows there. See
   [layouts](docs/user/layouts.md#scratchpad).
 
 - **Float rules from an open window.** Preferences → Rules lists the windows
@@ -22,6 +29,14 @@ CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
   which no default rule can tell apart from a browser window.
 
 ### Fixed
+
+- **"Always on Visible Workspace" windows stayed tiled.** A window pinned to all
+  workspaces is meant to float out of the tile grid, but the check never matched
+  on a real GNOME Shell. The window stayed tiled, followed the active workspace
+  and reshuffled the layout on every switch. It now floats, and tiles again when
+  unpinned. A window pinned on a secondary monitor while workspaces are on the
+  primary only cannot be told apart from Mutter's own stickiness there and stays
+  tiled.
 
 - **Returning to the origin with a sticky window open.** A window set to
   "Always on Visible Workspace", or any window on a secondary monitor with
