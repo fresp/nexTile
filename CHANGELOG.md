@@ -23,6 +23,14 @@ CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
 
 ### Fixed
 
+- **"Always on Visible Workspace" windows stayed tiled.** A window pinned to all
+  workspaces is meant to float out of the tile grid, but the check never matched
+  on a real GNOME Shell. The window stayed tiled, followed the active workspace
+  and reshuffled the layout on every switch. It now floats, and tiles again when
+  unpinned. A window pinned on a secondary monitor while workspaces are on the
+  primary only cannot be told apart from Mutter's own stickiness there and stays
+  tiled.
+
 - **Returning to the origin with a sticky window open.** A window set to
   "Always on Visible Workspace", or any window on a secondary monitor with
   workspaces on the primary only, counted as a window on the launched

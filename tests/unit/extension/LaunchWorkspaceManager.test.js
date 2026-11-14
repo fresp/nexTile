@@ -120,7 +120,7 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
 
     it("does not relocate sticky (all-workspaces) windows", () => {
       const sticky = createMockWindow({
-        always_on_all_workspaces: true,
+        on_all_workspaces: true,
         workspace: ctx.workspaces[0],
       });
       emitWindowCreated(sticky);
