@@ -62,6 +62,7 @@ ROOT ─ WORKSPACE ─ MONITOR ─┬─ WINDOW
 | `workspace.js` `WorkspaceManager` | Workspace nodes + per-workspace signal lifecycle + renumbering. |
 | `launch-workspace.js` `LaunchWorkspaceManager` | Launch → new workspace → auto-tile relocation (NexTile feature). |
 | `scratchpad.js` `ScratchpadManager` | The scratchpad's members: floating windows hidden by minimizing them, sticky while hidden. |
+| `external-control.js` `ExternalControlService` | Runs keybinding actions and reports state for other programs over D-Bus, when the user allows it (see below). |
 | `window-list.js` `WindowListService` | Answers the prefs Rules page's "which windows are open?" over D-Bus (see below). |
 | `monitor.js` `MonitorManager` | Monitor-per-workspace nodes; split orientation per monitor geometry. |
 | `cheatsheet.js` `Cheatsheet` | In-shell keybinding overlay (`Super+Shift+/`). |
@@ -156,6 +157,19 @@ and the reply parser live in `lib/shared/window-list.js`.
 
 It is a request, not a GSettings mirror, so window titles are never written to dconf.
 Prefs → extension still goes through GSettings (`window-overrides-reload-trigger`).
+
+## Other programs → extension: external control
+
+`ExternalControlService` exports a second interface,
+`org.gnome.Shell.Extensions.NexTile.Control`, on the same object. `Run(action)`
+takes a keybinding key and calls `Keybindings.run`, which invokes that key's own
+callback, so an action behaves exactly like its shortcut and is refused wherever
+the shortcut is (bindings off on the lock screen, shell not in its normal action
+mode). `GetState()` returns a small JSON summary without window titles. Both are
+refused unless `external-control-enabled` is on, and `Run` never runs the actions
+in `CONTROL_BLOCKED_ACTIONS` (they start a program or write files). The contract
+lives in `lib/shared/external-control.js`; user-facing behavior:
+[external-control.md](../user/external-control.md).
 
 ## Configuration sources
 

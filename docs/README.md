@@ -7,6 +7,7 @@
 - [Window rules](user/rules.md): which windows float or tile.
 - [Theming](user/theming.md): appearance settings, gaps, custom CSS.
 - [Portable config](user/config.md): settings and keybindings as JSON files.
+- [Control from other programs](user/external-control.md): run actions and read state over D-Bus.
 - [Multi-monitor](user/monitors.md): placement, excluding monitors, limitations.
 - [Troubleshooting](user/troubleshooting.md): restarting, debug logs, known limitations, reporting bugs.
 

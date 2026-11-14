@@ -61,6 +61,10 @@ vi.mock("resource:///org/gnome/shell/ui/main.js", () => ({
   panel: mockPanel,
   notify: () => {},
   modalCount: 0,
+  // Shell.ActionMode.NORMAL unless a test sets globalThis.__mockActionMode.
+  get actionMode() {
+    return globalThis.__mockActionMode ?? 1;
+  },
   sessionMode: { isLocked: false },
 }));
 

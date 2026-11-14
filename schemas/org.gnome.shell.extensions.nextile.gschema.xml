@@ -94,6 +94,11 @@
             <summary>Show tray icon in top bar</summary>
         </key>
 
+        <key type="b" name="external-control-enabled">
+            <default>false</default>
+            <summary>Let other programs run NexTile actions over D-Bus</summary>
+        </key>
+
         <key type="s" name="workspace-skip-tile">
             <default>''</default>
             <summary>Skips tiling on the provided workspace indices</summary>

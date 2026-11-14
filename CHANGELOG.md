@@ -7,6 +7,11 @@ CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
 
 ### Added
 
+- **Control from other programs.** With Preferences → Layout → External control
+  turned on, scripts, gesture tools and launchers can run any NexTile action by
+  its keybinding key and read a little state over D-Bus, as `i3-msg` does for
+  i3. Off by default. See [external control](docs/user/external-control.md).
+
 - **Scratchpad.** `Super+Shift+-` sends the focused window to the scratchpad:
   it floats and is hidden. `Super+-` shows a scratchpad window on the current
   workspace, hides it again when it has the focus, and cycles when there are

@@ -77,7 +77,21 @@ export function mkdir_with_parents(path, mode) {
   return 0;
 }
 
+// A GLib.Variant holding its signature and JS value. deepUnpack() returns the
+// value the way GJS does for a tuple: an array of its members.
+export class Variant {
+  constructor(signature, value) {
+    this.signature = signature;
+    this.value = value;
+  }
+
+  deepUnpack() {
+    return this.value;
+  }
+}
+
 export default {
+  Variant,
   getenv,
   get_home_dir,
   get_user_data_dir,
