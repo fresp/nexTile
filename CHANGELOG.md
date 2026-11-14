@@ -7,6 +7,12 @@ CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
 
 ### Added
 
+- **Layouts survive docking and undocking.** When a monitor is removed and the
+  same display setup later returns, its windows get back the splits, order and
+  sizes they had, and so does the single-monitor arrangement the next time you
+  undock. Kept in memory for the session. See
+  [multi-monitor](docs/user/monitors.md#docking-and-undocking).
+
 - **Control from other programs.** With Preferences → Layout → External control
   turned on, scripts, gesture tools and launchers can run any NexTile action by
   its keybinding key and read a little state over D-Bus, as `i3-msg` does for
