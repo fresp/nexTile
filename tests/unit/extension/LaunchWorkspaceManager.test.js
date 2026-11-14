@@ -9,7 +9,7 @@ import {
   createWindowManagerFixture,
   getWorkspaceAndMonitor,
 } from "../../mocks/helpers/index.js";
-import { Workspace, WindowType } from "../../mocks/gnome/Meta.js";
+import { Rectangle, Workspace, WindowType } from "../../mocks/gnome/Meta.js";
 
 /**
  * NexTile launch → new workspace → auto-tile tests.
@@ -249,6 +249,64 @@ describe("LaunchWorkspaceManager - launch to new workspace", () => {
       emitWindowCreated(metaWindow);
       expect(ctx.workspaceManager.get_n_workspaces()).toBe(2);
       expect(metaWindow.get_workspace()).toBe(ctx.workspaces[0]);
+    });
+
+    it("starts a 'scratchpad' rule's window hidden in the scratchpad", () => {
+      ctx.settings.set_boolean("launch-new-workspace-enabled", false);
+      withRules([{ wmClass: "Notes", workspace: "scratchpad" }]);
+      const metaWindow = createMockWindow({ wm_class: "Notes", workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+
+      expect(wm().scratchpad.has(metaWindow)).toBe(true);
+      expect(metaWindow.minimized).toBe(true);
+      expect(metaWindow.is_on_all_workspaces()).toBe(true);
+      // Tracked as a floating window, and no workspace was made for it.
+      expect(ctx.tree.findNode(metaWindow).mode).toBe(WINDOW_MODES.FLOAT);
+      expect(ctx.workspaceManager.get_n_workspaces()).toBe(2);
+    });
+
+    it("centers a scratchpad rule's window the first time it is shown, and only then", () => {
+      withRules([{ wmClass: "Notes", workspace: "scratchpad" }]);
+      const metaWindow = createMockWindow({
+        wm_class: "Notes",
+        workspace: ctx.workspaces[0],
+        rect: new Rectangle({ x: 0, y: 0, width: 800, height: 480 }),
+      });
+      emitWindowCreated(metaWindow);
+      const area = metaWindow.get_work_area_current_monitor();
+
+      wm().scratchpad.show(metaWindow);
+      const shown = metaWindow.get_frame_rect();
+      expect(shown.x).toBe(area.x + Math.floor((area.width - 800) / 2));
+      expect(shown.y).toBe(area.y + Math.floor((area.height - 480) / 2));
+
+      // Where the user then puts it is kept.
+      metaWindow.move_frame(true, 10, 20);
+      wm().scratchpad.hide(metaWindow);
+      wm().scratchpad.show(metaWindow);
+      expect(metaWindow.get_frame_rect().x).toBe(10);
+      expect(metaWindow.get_frame_rect().y).toBe(20);
+    });
+
+    it("leaves a window that floats out of the scratchpad", () => {
+      withRules([{ wmClass: "Notes", workspace: "scratchpad" }]);
+      const dialog = createMockWindow({
+        wm_class: "Notes",
+        window_type: WindowType.DIALOG,
+        workspace: ctx.workspaces[0],
+      });
+      emitWindowCreated(dialog);
+      expect(wm().scratchpad.has(dialog)).toBe(false);
+      expect(dialog.minimized).toBe(false);
+    });
+
+    it("does not hide a scratchpad rule's window again when it is created twice", () => {
+      withRules([{ wmClass: "Notes", workspace: "scratchpad" }]);
+      const metaWindow = createMockWindow({ wm_class: "Notes", workspace: ctx.workspaces[0] });
+      emitWindowCreated(metaWindow);
+      wm().scratchpad.show(metaWindow);
+      emitWindowCreated(metaWindow);
+      expect(metaWindow.minimized).toBe(false);
     });
 
     it("moves a numbered rule's window to that workspace without appending one", () => {

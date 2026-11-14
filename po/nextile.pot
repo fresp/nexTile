@@ -41,7 +41,7 @@ msgstr ""
 msgid "Window Toggle"
 msgstr ""
 
-#: lib/extension/cheatsheet.js
+#: lib/extension/cheatsheet.js lib/prefs/workspaces.js
 msgid "Scratchpad"
 msgstr ""
 

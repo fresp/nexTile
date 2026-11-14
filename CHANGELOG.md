@@ -10,7 +10,9 @@ CalVer (`vYYYY.M.N`, see [RELEASING.md](RELEASING.md)).
 - **Scratchpad.** `Super+Shift+-` sends the focused window to the scratchpad:
   it floats and is hidden. `Super+-` shows a scratchpad window on the current
   workspace, hides it again when it has the focus, and cycles when there are
-  several. `Super+c` takes a window back out and tiles it. See
+  several. `Super+c` takes a window back out and tiles it. A per-app placement
+  rule with `"workspace": "scratchpad"` (Preferences → Workspaces, or
+  `windows.json`) starts an application's windows there. See
   [layouts](docs/user/layouts.md#scratchpad).
 
 - **Float rules from an open window.** Preferences → Rules lists the windows

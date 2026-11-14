@@ -15,7 +15,7 @@ SHOW = {"name": "ScratchpadShow"}
 
 
 def _window_states(shell_proxy):
-    """Every window on any workspace, by title: minimized, sticky, workspace, width."""
+    """Every window on any workspace, by title: minimized, sticky, workspace, x, width."""
     # shell_proxy.eval already decodes a JSON object.
     return shell_proxy.eval("""
     (function() {
@@ -26,6 +26,7 @@ def _window_states(shell_proxy):
                 minimized: w.minimized,
                 sticky: w.is_on_all_workspaces(),
                 workspace: ws ? ws.index() : null,
+                x: w.get_frame_rect().x,
                 width: w.get_frame_rect().width,
             };
         }
@@ -145,3 +146,61 @@ class TestScratchpad:
             predicate=lambda s: not s["minimized"] and not s["sticky"] and s["workspace"] == origin,
             message="hidden window did not show on the origin workspace",
         )
+
+
+def _set_launch_rules(shell_proxy, rules):
+    """Write windows.json launchRules and make the running extension reload them."""
+    shell_proxy.eval(f"""
+    (function() {{
+        const ext = Main.extensionManager.lookup('nextile@fresp.github.io').stateObj;
+        const props = ext.configMgr.windowProps;
+        props.launchRules = {json.dumps(rules)};
+        ext.configMgr.windowProps = props;
+        ext.extWm.reloadWindowOverrides(false);
+        return 'OK';
+    }})();
+    """)
+
+
+@pytest.fixture
+def launch_rules(shell_proxy):
+    """Set launchRules for one test, then clear them."""
+    yield lambda rules: _set_launch_rules(shell_proxy, rules)
+    _set_launch_rules(shell_proxy, [])
+
+
+class TestScratchpadLaunchRule:
+    def test_rule_starts_the_window_hidden_and_show_centers_it(
+        self, shell_proxy, window_helper, restore_settings, launch_window, launch_rules
+    ):
+        """A "scratchpad" launch rule hides the app's new window until it is asked for."""
+        restore_settings.set("launch-new-workspace-enabled", False)
+        shell_proxy.wait_for_nextile_settled()
+        workspaces_before = shell_proxy.get_workspace_count()
+        launch_rules([{"wmClass": "nextile-test-window", "workspace": "scratchpad"}])
+
+        window = launch_window()
+        title = window["title"]
+
+        wait_for(
+            lambda: _window_states(shell_proxy)[title],
+            predicate=lambda s: s["minimized"] and s["sticky"],
+            message="the rule did not start the window hidden in the scratchpad",
+        )
+        assert shell_proxy.get_workspace_count() == workspaces_before
+
+        shell_proxy.invoke_nextile_action(SHOW)
+
+        shown = wait_for(
+            lambda: _window_states(shell_proxy)[title],
+            predicate=lambda s: not s["minimized"] and not s["sticky"],
+            message="ScratchpadShow did not show the window",
+        )
+        shell_proxy.wait_for_layout_landed()
+        workspace = window_helper.get_workspace_rect()
+        shown = _window_states(shell_proxy)[title]
+        # Floating at its own size, centered: not tiled across the workspace.
+        assert shown["width"] < workspace["width"] * 0.9
+        left = shown["x"] - workspace["x"]
+        right = workspace["x"] + workspace["width"] - shown["x"] - shown["width"]
+        assert abs(left - right) <= 2
