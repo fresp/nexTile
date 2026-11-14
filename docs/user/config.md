@@ -58,7 +58,7 @@ rule wins:
 | --- | --- |
 | `"new"` | A fresh workspace, as the global switch does. |
 | `"current"` | Stay on the active workspace and tile there. |
-| `"scratchpad"` | Start hidden in the [scratchpad](layouts.md#scratchpad). The first `Super+-` that shows it centers it. |
+| `"scratchpad"` | Go to the [scratchpad](layouts.md#scratchpad): the window opens, then hides as soon as it has drawn. |
 | a number | That workspace, counted from 1. If it does not exist yet, a new one at the end. |
 
 `wmClass` and `wmTitle` match the same way as in [float rules](rules.md). Windows

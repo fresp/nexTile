@@ -170,7 +170,7 @@ def launch_rules(shell_proxy):
 
 
 class TestScratchpadLaunchRule:
-    def test_rule_starts_the_window_hidden_and_show_centers_it(
+    def test_rule_hides_the_window_and_show_brings_it_back_floating(
         self, shell_proxy, window_helper, restore_settings, launch_window, launch_rules
     ):
         """A "scratchpad" launch rule hides the app's new window until it is asked for."""
@@ -185,22 +185,20 @@ class TestScratchpadLaunchRule:
         wait_for(
             lambda: _window_states(shell_proxy)[title],
             predicate=lambda s: s["minimized"] and s["sticky"],
-            message="the rule did not start the window hidden in the scratchpad",
+            message="the rule did not hide the window in the scratchpad",
         )
+        # Hidden after its first frame, so NexTile is not left waiting for one.
+        shell_proxy.wait_for_nextile_settled()
         assert shell_proxy.get_workspace_count() == workspaces_before
 
         shell_proxy.invoke_nextile_action(SHOW)
 
-        shown = wait_for(
+        wait_for(
             lambda: _window_states(shell_proxy)[title],
             predicate=lambda s: not s["minimized"] and not s["sticky"],
             message="ScratchpadShow did not show the window",
         )
         shell_proxy.wait_for_layout_landed()
         workspace = window_helper.get_workspace_rect()
-        shown = _window_states(shell_proxy)[title]
-        # Floating at its own size, centered: not tiled across the workspace.
-        assert shown["width"] < workspace["width"] * 0.9
-        left = shown["x"] - workspace["x"]
-        right = workspace["x"] + workspace["width"] - shown["x"] - shown["width"]
-        assert abs(left - right) <= 2
+        # Floating at its own size, not tiled across the workspace.
+        assert _window_states(shell_proxy)[title]["width"] < workspace["width"] * 0.9
