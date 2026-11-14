@@ -31,7 +31,8 @@ never runs there.
 
 ## Coverage
 
-`vitest.config.js` sets the coverage floor (raise it, never lower it) and excludes
+`vitest.config.js` sets the coverage floor (raise it, never lower it; recalibrate it
+only when a new coverage tool measures the same code differently) and excludes
 only UI glue that would need GTK4 or a real St/Clutter stack: the prefs, the
 cheatsheet, the quick-settings indicator and the extension's theme manager.
 
