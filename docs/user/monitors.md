@@ -26,9 +26,24 @@ With GNOME's default `workspaces-only-on-primary`, the other monitors' windows s
 every workspace. NexTile carries those monitors' layouts to the active workspace, so
 focus and moves across monitors work everywhere.
 
+## Docking and undocking
+
+NexTile remembers the layout of each display setup. When a monitor goes away
+(a laptop undocked), its windows move to the remaining one and are tiled there;
+when the same setup returns, the windows go back and get the splits, order and
+sizes they had. The single-monitor arrangement is remembered the same way for the
+next time you undock.
+
+- A setup is told apart by its monitors' sizes and positions, not by which
+  physical monitor is attached.
+- Windows opened while the setup was away are added after the restored ones.
+  Windows that were closed are left out.
+- The layouts are kept in memory only: they are gone after you log out or
+  disable NexTile.
+
 ## Limitations
 
 - Portrait monitors are not fully supported: focus and navigation across a portrait
   secondary monitor can misbehave. Excluding that monitor is the workaround.
-- After a display change, if a layout looks wrong, disable and re-enable NexTile to
-  rebuild the tree.
+- After a change to a display setup NexTile has not seen in this session, if a
+  layout looks wrong, disable and re-enable NexTile to rebuild the tree.
